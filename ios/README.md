@@ -2,7 +2,7 @@
 
 **Build powerful AI chat experiences in your iOS apps with just a few lines of code.**
 
-The official Swift SDK for Mia21 AI Chat API - production-ready, fully tested (81% coverage), and designed for real-world apps.
+The official Swift SDK for Mia21 AI Chat API - production-ready, fully tested, and designed for real-world apps.
 
 [![Platform](https://img.shields.io/badge/platform-iOS%2015%2B%20%7C%20macOS%2012%2B-lightgrey.svg)](https://swift.org)
 [![Swift](https://img.shields.io/badge/Swift-5.9+-orange.svg)](https://swift.org)
@@ -32,7 +32,7 @@ The official Swift SDK for Mia21 AI Chat API - production-ready, fully tested (8
 
 **In Xcode:**
 1. File → Add Package Dependencies
-2. Enter URL: `https://github.com/mia21/ios-sdk.git`
+2. Enter URL: `https://github.com/mia21com/mia21.git`
 3. Select version: `1.0.0` or later
 4. Add to your target
 
@@ -91,7 +91,7 @@ That's it! You're ready to build. For more examples, see the sections below.
 **Xcode 14+:**
 1. Open your project in Xcode
 2. Go to **File → Add Package Dependencies**
-3. Paste the URL: `https://github.com/mia21/ios-sdk.git`
+3. Paste the URL: `https://github.com/mia21com/mia21.git`
 4. Select version rule: **Up to Next Major** `1.0.0`
 5. Click **Add Package**
 
@@ -502,8 +502,8 @@ Both examples are **fully functional**, **production-ready** apps you can learn 
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/mia21/ios-sdk.git
-cd ios-sdk/Examples
+git clone https://github.com/mia21com/mia21.git
+cd mia21/ios/Examples
 
 # 2. Open in Xcode
 open MiaSwiftUIExample.xcodeproj  # or MiaUIKitExample.xcodeproj
