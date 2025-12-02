@@ -185,7 +185,7 @@ dependencies {
     // implementation(project(":mia21-sdk"))
     
     // Use JitPack instead:
-    implementation("com.github.mia21com:mia21:1.0.0")
+    implementation("com.github.mia21com:mia21:0.0.1")
 }
 ```
 

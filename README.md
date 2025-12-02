@@ -85,7 +85,7 @@ Sign up at [mia21.com](https://mia21.com/signup) to get your free API key.
 **Or in Package.swift:**
 ```swift
 dependencies: [
-    .package(url: "https://github.com/mia21com/mia21.git", from: "1.0.0")
+    .package(url: "https://github.com/mia21com/mia21.git", from: "0.0.1")
 ]
 ```
 </details>
@@ -105,7 +105,7 @@ dependencyResolutionManagement {
 **In app/build.gradle.kts:**
 ```kotlin
 dependencies {
-    implementation("com.github.mia21com:mia21:1.0.0")
+    implementation("com.github.mia21com:mia21:0.0.1")
 }
 ```
 </details>

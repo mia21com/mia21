@@ -39,7 +39,7 @@ dependencyResolutionManagement {
 **In app/build.gradle.kts:**
 ```kotlin
 dependencies {
-    implementation("com.github.mia21com:mia21:1.0.0")
+    implementation("com.github.mia21com:mia21:0.0.1")
 }
 ```
 
@@ -106,7 +106,7 @@ dependencyResolutionManagement {
 3. Add dependency to **app/build.gradle.kts**:
 ```kotlin
 dependencies {
-    implementation("com.github.mia21com:mia21:1.0.0")
+    implementation("com.github.mia21com:mia21:0.0.1")
 }
 ```
 4. Sync your project with Gradle files

@@ -31,7 +31,7 @@ The official Swift SDK for Mia21 AI Chat API - production-ready, fully tested, a
 **In Xcode:**
 1. File → Add Package Dependencies
 2. Enter URL: `https://github.com/mia21com/mia21.git`
-3. Select version: `1.0.0` or later
+3. Select version: `0.0.1` or later
 4. Add to your target
 
 ### 2️⃣: Get Your API Key
@@ -89,7 +89,7 @@ That's it! You're ready to build. For more examples, see the sections below.
 1. Open your project in Xcode
 2. Go to **File → Add Package Dependencies**
 3. Paste the URL: `https://github.com/mia21com/mia21.git`
-4. Select version rule: **Up to Next Major** `1.0.0`
+4. Select version rule: **Up to Next Major** `0.0.1`
 5. Click **Add Package**
 
 ---
