@@ -1,13 +1,12 @@
 //
 //  SimpleVADManager.swift
-//  MiaUIKitExample
+//  MiaSwiftUIExample
 //
 //  Created on November 9, 2025.
 //  Copyright © 2025 Mia21. All rights reserved.
 //
 //  Description:
 //  Voice Activity Detection manager using SileroVAD library.
-//  Exact copy of earkick's SileroVADManager implementation.
 //
 
 import AVFoundation
@@ -35,51 +34,48 @@ final class SimpleVADManager: NSObject {
 
   private let realtimeCapture = RealtimeAudioCapture.shared
   private var isListening = false
-
   private var vadManager: VADWrapper?
+  private var isVADSetup = false
 
-  // Speech chunk tracking
   private var isCurrentlySpeaking = false
   private var speechStartTime: Date?
   private var collectedPCMData = Data()
   private let pcmDataQueue = DispatchQueue(label: "com.mia21.pcmDataQueue")
-
   private var isBotSpeaking = false
 
-  // Debug metrics
   private var totalBuffersProcessed = 0
   private var speechBuffersDetected = 0
   private var chunksRecorded = 0
 
   private override init() {
     super.init()
-    setupVADProcessor()
   }
 
   // MARK: - Setup
 
-  private func setupVADProcessor() {
-    vadManager = VADWrapper()
+  private func setupVADProcessorIfNeeded() {
+    guard !isVADSetup else { return }
+    isVADSetup = true
     
-    guard let vadManager = vadManager else {
-      print("❌ SimpleVADManager: Failed to create VADWrapper")
-      return
+    DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+      let vad = VADWrapper()
+      vad?.delegate = self
+      vad?.setSileroModel(.v5)
+      vad?.setSamplerate(.SAMPLERATE_48)
+      
+      DispatchQueue.main.async {
+        self?.vadManager = vad
+      }
     }
-
-    vadManager.delegate = self
-    vadManager.setSileroModel(.v5)
-    vadManager.setSamplerate(.SAMPLERATE_48)
   }
 
   // MARK: - Bot Speech Management
 
   func botDidStartSpeaking() {
-    print("🎤 VAD: botDidStartSpeaking - setting isBotSpeaking=true (isListening=\(isListening))")
     isBotSpeaking = true
   }
 
   func botDidStopSpeaking() {
-    print("🎤 VAD: botDidStopSpeaking - setting isBotSpeaking=false (isListening=\(isListening))")
     isBotSpeaking = false
   }
 
@@ -94,14 +90,14 @@ final class SimpleVADManager: NSObject {
   // MARK: - Public Methods
 
   func startVADMode() {
-    print("🎤 SimpleVADManager: startVADMode called - isListening=\(isListening), isBotSpeaking=\(isBotSpeaking)")
-    guard !isListening else { 
-      print("🎤 SimpleVADManager: Already listening, ignoring startVADMode")
-      return 
-    }
-    guard let vadManager = vadManager else {
-      let error = NSError(domain: "SimpleVADManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "VAD Manager not initialized"])
-      delegate?.vadDidFailWithError(error)
+    guard !isListening else { return }
+    
+    setupVADProcessorIfNeeded()
+    
+    guard vadManager != nil else {
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+        self?.startVADMode()
+      }
       return
     }
 
@@ -112,10 +108,8 @@ final class SimpleVADManager: NSObject {
       try realtimeCapture.startCapture()
       resetVADState()
       isListening = true
-      print("🎤 SimpleVADManager: VAD started successfully - isListening=\(isListening), isBotSpeaking=\(isBotSpeaking)")
       delegate?.vadDidStartListening()
     } catch {
-      print("🎤 SimpleVADManager: Failed to start VAD: \(error)")
       stopVADMode()
       delegate?.vadDidFailWithError(error)
     }
@@ -142,40 +136,32 @@ final class SimpleVADManager: NSObject {
 
   private func configureAudioSessionWithEchoSuppress() {
     let audioSession = AVAudioSession.sharedInstance()
-    
     let isPlayAndRecordConfigured = audioSession.category == .playAndRecord
     
     if isPlayAndRecordConfigured {
-      print("🎤 SimpleVADManager: Audio session already configured for playAndRecord, keeping current mode")
       try? configureDirectionalMicrophone(audioSession)
       return
     }
     
     do {
-      try audioSession.setCategory(.playAndRecord, mode: .voiceChat, options: [
+      try audioSession.setCategory(.playAndRecord, mode: .default, options: [
         .allowBluetooth,
         .defaultToSpeaker,
-        .duckOthers,
         .mixWithOthers
       ])
-      
       try audioSession.setPreferredSampleRate(16000.0)
       try audioSession.setPreferredIOBufferDuration(0.02)
       try configureDirectionalMicrophone(audioSession)
-      
       try audioSession.setActive(true)
     } catch {
       do {
-        try audioSession.setCategory(.playAndRecord, mode: .voiceChat, options: [.defaultToSpeaker])
+        try audioSession.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker])
         try audioSession.setActive(true)
-      } catch {
-        print("❌ SimpleVADManager: Audio session configuration failed: \(error)")
-      }
+      } catch {}
     }
   }
 
   private func configureDirectionalMicrophone(_ audioSession: AVAudioSession) throws {
-    // Configure input data source for beamforming if available
     if let availableInputs = audioSession.availableInputs {
       for input in availableInputs {
         if input.portType == AVAudioSession.Port.builtInMic {
@@ -194,16 +180,12 @@ final class SimpleVADManager: NSObject {
         }
       }
     }
-
     try audioSession.setPreferredInputOrientation(.portrait)
   }
 
   private func resetVADState() {
-    print("🎤 SimpleVADManager: resetVADState called - preserving isBotSpeaking=\(isBotSpeaking)")
-    
     isCurrentlySpeaking = false
     speechStartTime = nil
-    
     pcmDataQueue.async { [weak self] in
       self?.collectedPCMData = Data()
     }
@@ -211,7 +193,6 @@ final class SimpleVADManager: NSObject {
 
   private func shouldFilterSpeech() -> Bool {
     guard isListening else { return true }
-    
     return isBotSpeaking
   }
 
@@ -227,9 +208,7 @@ final class SimpleVADManager: NSObject {
     totalBuffersProcessed += 1
     let samples = channelData[0]
 
-    if isBotSpeaking {
-      return
-    }
+    if isBotSpeaking { return }
 
     vadManager.processAudioData(withBuffer: samples, count: UInt(buffer.frameLength))
   }
@@ -246,10 +225,7 @@ final class SimpleVADManager: NSObject {
 
 extension SimpleVADManager: RealtimeAudioCaptureDelegate {
   func didCaptureAudioBuffer(_ buffer: AVAudioPCMBuffer, timestamp: AVAudioTime) {
-    guard isListening else { 
-      return 
-    }
-    
+    guard isListening else { return }
     processSileroVAD(buffer: buffer)
   }
 
@@ -263,7 +239,6 @@ extension SimpleVADManager: RealtimeAudioCaptureDelegate {
 extension SimpleVADManager: VADDelegate {
   func voiceStarted() {
     speechBuffersDetected += 1
-
     guard !shouldFilterSpeech() else { return }
 
     if !isCurrentlySpeaking {

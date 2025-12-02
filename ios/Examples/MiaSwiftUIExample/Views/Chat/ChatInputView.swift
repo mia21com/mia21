@@ -56,17 +56,16 @@ struct ChatInputView: View {
             HStack(spacing: 8) {
               ProgressView()
                 .scaleEffect(0.8)
-                .padding(.leading, 16)
               
               Text(isRecordingState ? "Listening..." : "Transcribing...")
                 .font(.system(size: 16))
                 .foregroundColor(.secondary)
             }
+            .padding(.leading, 16)
             .frame(maxWidth: .infinity, alignment: .leading)
             .frame(height: 46)
             .background(Color(.secondarySystemBackground))
             .cornerRadius(23)
-            .padding(.leading, 8)
           }
         }
 

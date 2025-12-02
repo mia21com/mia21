@@ -19,6 +19,7 @@ final class ChatViewModel: ObservableObject {
 
   @Published private(set) var messages: [ChatMessage] = []
   @Published private(set) var isLoading: Bool = false
+  @Published private(set) var isChatInitialized: Bool = false
   @Published private(set) var errorMessage: String?
   @Published var isVoiceEnabled: Bool = false
   @Published var isHandsFreeModeEnabled: Bool = false
@@ -97,6 +98,7 @@ final class ChatViewModel: ObservableObject {
   }
 
   func initializeChat() async {
+    isChatInitialized = false
     let sessionId = UUID()
     currentSessionId = sessionId
     
@@ -118,6 +120,7 @@ final class ChatViewModel: ObservableObject {
         conversationHistory.append(Mia21.ChatMessage(role: .assistant, content: welcomeMessage))
       }
       
+      isChatInitialized = true
       onConversationCreated?()
     } catch {
       if sessionId == currentSessionId {
@@ -155,6 +158,7 @@ final class ChatViewModel: ObservableObject {
       conversationHistory = loadedHistory
       currentSpaceId = conversation.spaceId
       currentBotId = conversation.botId
+      isChatInitialized = true
       onMessagesUpdated?()
       
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
@@ -197,6 +201,7 @@ final class ChatViewModel: ObservableObject {
 
   func clearChat() {
     currentSessionId = UUID()
+    isChatInitialized = false
     messages.removeAll()
     conversationHistory.removeAll()
     currentConversationId = nil

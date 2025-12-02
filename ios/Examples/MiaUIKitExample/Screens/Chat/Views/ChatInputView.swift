@@ -63,6 +63,12 @@ final class ChatInputView: UIView {
     }
   }
   
+  var isChatInitialized: Bool = false {
+    didSet {
+      updateSendButtonState()
+    }
+  }
+  
   var recordingStatusText: String = "" {
     didSet {
       statusLabel.text = recordingStatusText
@@ -236,6 +242,7 @@ final class ChatInputView: UIView {
     setupUI()
     setupButtonManager()
     addGradientToSendButton()
+    updateSendButtonState()
   }
   
   required init?(coder: NSCoder) {
@@ -376,8 +383,10 @@ final class ChatInputView: UIView {
   }
   
   private func updateSendButtonState() {
-    sendButton.isEnabled = !isLoading
-    sendButton.alpha = isLoading ? 0.4 : 1.0
+    let canSend = !isLoading && isChatInitialized && !isHandsFreeModeEnabled
+    sendButton.isEnabled = canSend
+    sendButton.alpha = canSend ? 1.0 : 0.3
+    sendButton.isUserInteractionEnabled = canSend
   }
   
   private func updateUIForRecording() {
@@ -456,6 +465,7 @@ final class ChatInputView: UIView {
   
   private func updateUIForHandsFreeMode() {
     buttonManager.updateForHandsFreeMode(isActive: isHandsFreeModeEnabled, messageTextView: messageTextView)
+    updateSendButtonState()
     
     // Update hands-free button visibility when mode is toggled
     let hasText = !messageTextView.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -464,6 +474,7 @@ final class ChatInputView: UIView {
   
   func updateButtonStates(hasText: Bool) {
     buttonManager.updateForTextInput(hasText: hasText)
+    updateSendButtonState()
     
     // Show hands-free button only when:
     // - Hands-free mode is active, OR

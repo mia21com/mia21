@@ -37,25 +37,25 @@ final class HandsFreeAudioManager: NSObject {
 
   weak var delegate: HandsFreeAudioManagerDelegate?
 
-  private let sileroVAD = SimpleVADManager.shared
+  private lazy var sileroVAD: SimpleVADManager = {
+    let vad = SimpleVADManager.shared
+    vad.delegate = self
+    return vad
+  }()
   private var successfulTranscriptions = 0
   private var isHandsFreeUIActive = false
   private var isBotCurrentlySpeaking = false
 
-  // Timing measurements for complete flow tracking
   private var processingStartTime: Date?
   private var transcriptionStartTime: Date?
   private var transcriptionEndTime: Date?
   private var botResponseStartTime: Date?
   private var botResponseEndTime: Date?
 
-  // Reference to client for transcription
   private weak var transcriptionClient: Mia21Client?
 
   private override init() {
     super.init()
-
-    sileroVAD.delegate = self
     HandsFreeAudioManager._isInitialized = true
   }
 

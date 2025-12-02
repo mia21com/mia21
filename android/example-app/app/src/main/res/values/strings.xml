@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Mia21 Example</string>
+    
+    <!-- App Title -->
+    <string name="app_title">Mia</string>
+    
+    <!-- Navigation -->
+    <string name="menu">Menu</string>
+    <string name="new_chat">New Chat</string>
+    <string name="recents">RECENTS</string>
+    
+    <!-- Content Descriptions -->
+    <string name="content_description_menu">Menu</string>
+    <string name="content_description_audio_reader">Audio Reader</string>
+    <string name="content_description_mia_logo">Mia Logo</string>
+    <string name="content_description_delete">Delete</string>
+    <string name="content_description_record">Record</string>
+    <string name="content_description_hands_free">Hands-free</string>
+    
+    <!-- Space and Bot Selection -->
+    <string name="select_space">Select Space</string>
+    <string name="select_bot">Select Bot</string>
+    <string name="no_bots_available">No Bots Available</string>
+    
+    <!-- Environment -->
+    <string name="environment_production">Production</string>
+    <string name="environment_production_selected">Production ✓</string>
+    <string name="environment_staging">Staging</string>
+    <string name="environment_staging_selected">Staging ✓</string>
+    
+    <!-- Input Placeholders -->
+    <string name="input_placeholder_message">Message</string>
+    <string name="input_placeholder_listening">Listening</string>
+    <string name="input_placeholder_transcribing">Transcribing</string>
+    
+    <!-- Buttons -->
+    <string name="button_retry">Retry</string>
+    
+    <!-- Loading Messages -->
+    <string name="loading_spaces_bots">Loading spaces and bots…</string>
+    
+    <!-- Error Messages -->
+    <string name="error_failed_to_start_recording">Failed to start recording</string>
+    <string name="error_microphone_permission_required">Microphone permission is required for voice input</string>
+    <string name="error_no_text_detected">No text detected in audio</string>
+    <string name="error_transcription_failed">Transcription failed: %1$s</string>
+    <string name="error_no_audio_data">No audio data recorded</string>
+    <string name="error_request_timed_out">Request timed out. Please check your internet connection and try again.</string>
+    <string name="error_unknown">Unknown error occurred</string>
+    <string name="error_failed_to_load">Failed to load: %1$s</string>
+    <string name="error_failed_to_load_spaces">Failed to load spaces: %1$s</string>
+    <string name="error_failed_to_load_bots">Failed to load bots: %1$s</string>
+    <string name="error_failed_to_load_conversations">Failed to load conversations: %1$s</string>
+    <string name="error_failed_to_load_conversation">Failed to load conversation: %1$s</string>
+    <string name="error_failed_to_delete_conversation">Failed to delete conversation: %1$s</string>
+    <string name="error_stream_error">Stream error: %1$s</string>
+    <string name="error_failed_to_send_message">Failed to send message: %1$s</string>
+</resources>
+

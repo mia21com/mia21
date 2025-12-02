@@ -71,16 +71,13 @@ final class AudioPlaybackManager: NSObject {
     
     if isPlayingAudio {
       if !handsFreeActive {
-        // Only deactivate if hands-free is not active
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
       } else {
-        // Keep session active but ensure it's in playAndRecord mode
         let audioSession = AVAudioSession.sharedInstance()
         if audioSession.category != .playAndRecord {
-          try? audioSession.setCategory(.playAndRecord, mode: .voiceChat, options: [
+          try? audioSession.setCategory(.playAndRecord, mode: .default, options: [
             .allowBluetooth,
             .defaultToSpeaker,
-            .duckOthers,
             .mixWithOthers
           ])
         }
@@ -88,7 +85,6 @@ final class AudioPlaybackManager: NSObject {
       isPlayingAudio = false
     }
     
-    // Notify that bot stopped speaking if it was playing
     if wasPlaying {
       hasNotifiedBotStarted = false
       onBotDidStopSpeaking?()
@@ -103,7 +99,6 @@ final class AudioPlaybackManager: NSObject {
         isProcessingQueue = false
         isPlayingAudio = false
         hasNotifiedBotStarted = false
-        // Notify that bot stopped speaking when queue is empty
         onBotDidStopSpeaking?()
       }
       return
@@ -112,35 +107,29 @@ final class AudioPlaybackManager: NSObject {
     isProcessingQueue = true
     let audioData = audioQueue.removeFirst()
 
-    // Move audio session setup off main thread to prevent hangs
     DispatchQueue.global(qos: .userInitiated).async { [weak self] in
       guard let self = self else { return }
       
       do {
         let audioSession = AVAudioSession.sharedInstance()
         
-        // Check if hands-free mode is active - if so, use playAndRecord
         let handsFreeActive = HandsFreeAudioManager.isInitialized && HandsFreeAudioManager.shared.isActive
         
         if !self.isPlayingAudio {
           if handsFreeActive {
-            // Keep playAndRecord mode for hands-free
             if audioSession.category != .playAndRecord {
-              try audioSession.setCategory(.playAndRecord, mode: .voiceChat, options: [
-                .allowBluetoothHFP,
+              try audioSession.setCategory(.playAndRecord, mode: .default, options: [
+                .allowBluetooth,
                 .defaultToSpeaker,
-                .duckOthers,
                 .mixWithOthers
               ])
             }
           } else {
-            // Use playback mode when hands-free is not active
             try audioSession.setCategory(.playback, mode: .default)
           }
           try audioSession.setActive(true)
         }
         
-        // Create and configure player on main thread
         DispatchQueue.main.async { [weak self] in
           guard let self = self else { return }
           
@@ -157,7 +146,6 @@ final class AudioPlaybackManager: NSObject {
               self.onFirstAudioStart?()
             }
 
-            // Notify that bot started speaking (only once per session)
             if !self.hasNotifiedBotStarted {
               self.hasNotifiedBotStarted = true
               self.onBotDidStartSpeaking?()

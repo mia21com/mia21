@@ -67,7 +67,6 @@ final class AudioRecorderManager: NSObject {
       audioRecorder?.prepareToRecord()
       isPrepared = true
     } catch {
-      print("⚠️ Failed to prepare recording: \(error.localizedDescription)")
     }
   }
   
@@ -111,7 +110,6 @@ final class AudioRecorderManager: NSObject {
       try audioSession.setActive(true)
       audioRecorder?.record()
     } catch {
-      print("⚠️ Failed to activate audio session: \(error)")
       onRecordingError?(error)
     }
   }
@@ -163,10 +161,3 @@ extension AudioRecorderManager: AVAudioRecorderDelegate {
     onRecordingError?(error ?? NSError(domain: "AudioRecorder", code: -1, userInfo: [NSLocalizedDescriptionKey: "Encoding error"]))
   }
 }
-
-
-
-
-
-
-

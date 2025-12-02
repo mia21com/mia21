@@ -72,7 +72,6 @@ final class RealtimeAudioCapture {
       try audioEngine?.start()
       isCapturing = true
       bufferCount = 0
-      print("RealtimeAudioCapture: Started capturing audio at \(sampleRate)Hz")
 
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
         self?.validateAudioCaptureState()
@@ -84,10 +83,7 @@ final class RealtimeAudioCapture {
   }
 
   func stopCapture() {
-    guard isCapturing else {
-      return
-    }
-
+    guard isCapturing else { return }
     cleanup()
   }
 
@@ -100,9 +96,7 @@ final class RealtimeAudioCapture {
     if let engine = audioEngine {
       if engine.isRunning {
         engine.stop()
-        print("RealtimeAudioCapture: Audio engine stopped")
       }
-
       if let inputNode = inputNode {
         inputNode.removeTap(onBus: 0)
       }
@@ -112,15 +106,7 @@ final class RealtimeAudioCapture {
     inputNode = nil
 
     DispatchQueue.main.async {
-      let audioSession = AVAudioSession.sharedInstance()
-      
-      print("RealtimeAudioCapture: Deactivating audio session")
-      do {
-        try audioSession.setActive(false, options: .notifyOthersOnDeactivation)
-        print("RealtimeAudioCapture: Audio session deactivated successfully")
-      } catch {
-        print("RealtimeAudioCapture: Audio session deactivation failed: \(error)")
-      }
+      try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     }
   }
 
@@ -133,7 +119,6 @@ final class RealtimeAudioCapture {
 
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
       guard let self = self else { return }
-
       do {
         try self.startCapture()
       } catch {
@@ -147,22 +132,14 @@ final class RealtimeAudioCapture {
     case .undetermined:
       AVAudioSession.sharedInstance().requestRecordPermission { granted in
         DispatchQueue.main.async {
-          if granted {
-            print("RealtimeAudioCapture: Microphone permission granted")
-          } else {
-            print("RealtimeAudioCapture: Microphone permission denied by user")
-          }
           completion(granted)
         }
       }
     case .denied:
-      print("RealtimeAudioCapture: Microphone permission already denied")
       completion(false)
     case .granted:
-      print("RealtimeAudioCapture: Microphone permission already granted")
       completion(true)
     @unknown default:
-      print("RealtimeAudioCapture: Unknown microphone permission state")
       completion(false)
     }
   }
@@ -180,10 +157,9 @@ final class RealtimeAudioCapture {
     let isPlayAndRecordConfigured = audioSession.category == .playAndRecord
 
     if !isPlayAndRecordConfigured {
-      try audioSession.setCategory(.playAndRecord, mode: .voiceChat, options: [
-        .allowBluetoothHFP,
+      try audioSession.setCategory(.playAndRecord, mode: .default, options: [
+        .allowBluetooth,
         .defaultToSpeaker,
-        .duckOthers,
         .mixWithOthers
       ])
     }
@@ -229,20 +205,10 @@ final class RealtimeAudioCapture {
 
   private func handleAudioBuffer(buffer: AVAudioPCMBuffer, timestamp: AVAudioTime) {
     bufferCount += 1
-
-    guard buffer.frameLength > 0 else {
-      return
-    }
-
-    guard buffer.floatChannelData != nil else {
-      return
-    }
+    guard buffer.frameLength > 0, buffer.floatChannelData != nil else { return }
 
     DispatchQueue.main.async { [weak self] in
-      guard let self = self, self.isCapturing else {
-        return
-      }
-
+      guard let self = self, self.isCapturing else { return }
       self.delegate?.didCaptureAudioBuffer(buffer, timestamp: timestamp)
     }
   }
@@ -256,29 +222,23 @@ final class RealtimeAudioCapture {
 
     switch type {
     case .began:
-      print("🚨 RealtimeAudioCapture: Audio session interruption began - capture may stop")
+      break
     case .ended:
-      print("🚨 RealtimeAudioCapture: Audio session interruption ended")
       if let optionsValue = userInfo[AVAudioSessionInterruptionOptionKey] as? UInt {
         let options = AVAudioSession.InterruptionOptions(rawValue: optionsValue)
-        if options.contains(.shouldResume) {
-          print("🔄 RealtimeAudioCapture: Should resume after interruption - attempting restart")
-          if isCapturing {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
-              guard let self = self else { return }
-              do {
-                try self.startCapture()
-                print("✅ RealtimeAudioCapture: Successfully restarted after interruption")
-              } catch {
-                print("❌ RealtimeAudioCapture: Failed to restart after interruption: \(error)")
-                self.delegate?.didFailWithError(error)
-              }
+        if options.contains(.shouldResume) && isCapturing {
+          DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+            guard let self = self else { return }
+            do {
+              try self.startCapture()
+            } catch {
+              self.delegate?.didFailWithError(error)
             }
           }
         }
       }
     @unknown default:
-      print("🚨 RealtimeAudioCapture: Unknown audio session interruption type")
+      break
     }
   }
 

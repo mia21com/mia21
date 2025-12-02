@@ -58,9 +58,3 @@ struct TypingIndicatorView: View {
     }
   }
 }
-
-
-
-
-
-

@@ -134,6 +134,7 @@ final class ChatViewController: UIViewController {
     setupViewModelObservers()
 
     if !hasInitializedChat {
+      hasInitializedChat = true
       Task {
         await viewModel.initializeChat()
       }
@@ -163,8 +164,6 @@ final class ChatViewController: UIViewController {
     bots: [Bot],
     selectedBot: Bot?
   ) {
-    hasInitializedChat = true
-
     sideMenuViewController.setInitialData(
       spaces: spaces,
       selectedSpace: selectedSpace,
@@ -173,9 +172,13 @@ final class ChatViewController: UIViewController {
     )
 
     if let selectedSpace = selectedSpace {
+      viewModel.currentSpaceId = selectedSpace.spaceId
+      viewModel.currentBotId = selectedBot?.botId
+    }
+    
+    if !hasInitializedChat {
+      hasInitializedChat = true
       Task {
-        viewModel.currentSpaceId = selectedSpace.spaceId
-        viewModel.currentBotId = selectedBot?.botId
         await viewModel.initializeChat()
       }
     }
@@ -470,6 +473,7 @@ private extension ChatViewController {
 
   func sendMessage(text: String) async {
     guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+    guard viewModel.isChatInitialized else { return }
 
     chatInputView.clearText()
     chatInputView.isLoading = true
@@ -526,6 +530,14 @@ private extension ChatViewController {
           isEnabled: self?.viewModel.isHandsFreeModeEnabled ?? false,
           isListening: isListening
         )
+      }
+      .store(in: &cancellables)
+    
+    // Observe chat initialization state
+    viewModel.$isChatInitialized
+      .receive(on: DispatchQueue.main)
+      .sink { [weak self] isInitialized in
+        self?.chatInputView.isChatInitialized = isInitialized
       }
       .store(in: &cancellables)
   }

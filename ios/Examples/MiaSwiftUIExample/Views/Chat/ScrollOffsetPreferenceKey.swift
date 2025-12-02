@@ -7,6 +7,7 @@
 //
 //  Description:
 //  Preference key for tracking scroll view offset.
+//  Currently unused but kept for potential future scroll position tracking.
 //
 
 import SwiftUI
@@ -17,9 +18,3 @@ struct ScrollOffsetPreferenceKey: PreferenceKey {
     value = nextValue()
   }
 }
-
-
-
-
-
-

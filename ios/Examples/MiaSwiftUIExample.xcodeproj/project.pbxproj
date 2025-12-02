@@ -22,6 +22,9 @@
 		846B505B2ED0B248002D784C /* HandsFreeAudioManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 846B50442ED0B248002D784C /* HandsFreeAudioManager.swift */; };
 		846B505C2ED0B248002D784C /* LoadingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 846B504E2ED0B248002D784C /* LoadingViewModel.swift */; };
 		846B505D2ED0B248002D784C /* StoredChatMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 846B504B2ED0B248002D784C /* StoredChatMessage.swift */; };
+		8494A4942ED88DB600CD6E49 /* ChatViewModel+HandsFree.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8494A4932ED88DB600CD6E49 /* ChatViewModel+HandsFree.swift */; };
+		8494A4952ED88DB600CD6E49 /* ChatViewModel+Audio.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8494A4922ED88DB600CD6E49 /* ChatViewModel+Audio.swift */; };
+		8494A49C2ED8915800CD6E49 /* AppError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8494A49B2ED8915800CD6E49 /* AppError.swift */; };
 		AA0000010000000000000001 /* MiaSwiftUIExampleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000010000000000000002 /* MiaSwiftUIExampleApp.swift */; };
 		AA0000010000000000000005 /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000010000000000000006 /* ChatView.swift */; };
 		AA0000010000000000000009 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA000001000000000000000A /* Assets.xcassets */; };
@@ -49,6 +52,9 @@
 		846B504D2ED0B248002D784C /* ChatViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatViewModel.swift; sourceTree = "<group>"; };
 		846B504E2ED0B248002D784C /* LoadingViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadingViewModel.swift; sourceTree = "<group>"; };
 		846B504F2ED0B248002D784C /* SideMenuViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SideMenuViewModel.swift; sourceTree = "<group>"; };
+		8494A4922ED88DB600CD6E49 /* ChatViewModel+Audio.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ChatViewModel+Audio.swift"; sourceTree = "<group>"; };
+		8494A4932ED88DB600CD6E49 /* ChatViewModel+HandsFree.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ChatViewModel+HandsFree.swift"; sourceTree = "<group>"; };
+		8494A49B2ED8915800CD6E49 /* AppError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppError.swift; sourceTree = "<group>"; };
 		AA0000010000000000000002 /* MiaSwiftUIExampleApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MiaSwiftUIExampleApp.swift; sourceTree = "<group>"; };
 		AA0000010000000000000006 /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatView.swift; sourceTree = "<group>"; };
 		AA000001000000000000000A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -75,9 +81,9 @@
 		846B4FD22EC0CEDB002D784C /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				8494A49A2ED88DF100CD6E49 /* LoadingView */,
+				8494A4992ED88DEC00CD6E49 /* SideMenu */,
 				846B4FD52EC0CF41002D784C /* Chat */,
-				846B4FD32EC0CEEA002D784C /* SideMenuView.swift */,
-				846B4FCE2EBE227E002D784C /* LoadingView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -126,6 +132,7 @@
 		846B504C2ED0B248002D784C /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				8494A49B2ED8915800CD6E49 /* AppError.swift */,
 				846B50492ED0B248002D784C /* ChatHistoryItem.swift */,
 				846B504A2ED0B248002D784C /* ChatMessage.swift */,
 				846B504B2ED0B248002D784C /* StoredChatMessage.swift */,
@@ -136,11 +143,53 @@
 		846B50502ED0B248002D784C /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
-				846B504D2ED0B248002D784C /* ChatViewModel.swift */,
-				846B504E2ED0B248002D784C /* LoadingViewModel.swift */,
-				846B504F2ED0B248002D784C /* SideMenuViewModel.swift */,
+				8494A4962ED88DBA00CD6E49 /* ChatViewModel */,
+				8494A4982ED88DD400CD6E49 /* SideMenuViewModel */,
+				8494A4972ED88DC900CD6E49 /* LoadingViewModel */,
 			);
 			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		8494A4962ED88DBA00CD6E49 /* ChatViewModel */ = {
+			isa = PBXGroup;
+			children = (
+				846B504D2ED0B248002D784C /* ChatViewModel.swift */,
+				8494A4922ED88DB600CD6E49 /* ChatViewModel+Audio.swift */,
+				8494A4932ED88DB600CD6E49 /* ChatViewModel+HandsFree.swift */,
+			);
+			path = ChatViewModel;
+			sourceTree = "<group>";
+		};
+		8494A4972ED88DC900CD6E49 /* LoadingViewModel */ = {
+			isa = PBXGroup;
+			children = (
+				846B504E2ED0B248002D784C /* LoadingViewModel.swift */,
+			);
+			path = LoadingViewModel;
+			sourceTree = "<group>";
+		};
+		8494A4982ED88DD400CD6E49 /* SideMenuViewModel */ = {
+			isa = PBXGroup;
+			children = (
+				846B504F2ED0B248002D784C /* SideMenuViewModel.swift */,
+			);
+			path = SideMenuViewModel;
+			sourceTree = "<group>";
+		};
+		8494A4992ED88DEC00CD6E49 /* SideMenu */ = {
+			isa = PBXGroup;
+			children = (
+				846B4FD32EC0CEEA002D784C /* SideMenuView.swift */,
+			);
+			path = SideMenu;
+			sourceTree = "<group>";
+		};
+		8494A49A2ED88DF100CD6E49 /* LoadingView */ = {
+			isa = PBXGroup;
+			children = (
+				846B4FCE2EBE227E002D784C /* LoadingView.swift */,
+			);
+			path = LoadingView;
 			sourceTree = "<group>";
 		};
 		AA0000010000000000000014 = {
@@ -250,6 +299,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8494A4942ED88DB600CD6E49 /* ChatViewModel+HandsFree.swift in Sources */,
+				8494A4952ED88DB600CD6E49 /* ChatViewModel+Audio.swift in Sources */,
 				846B4FD42EC0CEEE002D784C /* SideMenuView.swift in Sources */,
 				AA0000010000000000000001 /* MiaSwiftUIExampleApp.swift in Sources */,
 				AA0000010000000000000005 /* ChatView.swift in Sources */,
@@ -268,6 +319,7 @@
 				846B505D2ED0B248002D784C /* StoredChatMessage.swift in Sources */,
 				846B4FD02EBE227E002D784C /* LoadingView.swift in Sources */,
 				AA0000010000000000000022 /* MessageBubble.swift in Sources */,
+				8494A49C2ED8915800CD6E49 /* AppError.swift in Sources */,
 				AA0000010000000000000024 /* TypingIndicatorView.swift in Sources */,
 				AA0000010000000000000026 /* ScrollOffsetPreferenceKey.swift in Sources */,
 				AA0000010000000000000028 /* ChatInputView.swift in Sources */,

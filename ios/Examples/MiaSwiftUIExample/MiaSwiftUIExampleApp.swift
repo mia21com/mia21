@@ -19,12 +19,7 @@ struct MiaSwiftUIExampleApp: App {
   @State private var bots: [Bot] = []
   @State private var selectedBot: Bot?
 
-  init() {
-    Mia21Client.setLogLevel(.debug)
-  }
-
-  private var appId: String {
-    // Get or create persistent user ID
+  private let appId: String = {
     if let savedUserId = UserDefaults.standard.string(forKey: "mia_user_id") {
       print("📱 Using saved user ID: \(savedUserId)")
       return savedUserId
@@ -34,16 +29,21 @@ struct MiaSwiftUIExampleApp: App {
       print("📱 Created new user ID: \(newUserId)")
       return newUserId
     }
-  }
+  }()
 
-  private var client: Mia21Client {
-    Mia21Client(
+  private let client: Mia21Client
+  private let audioManager: AudioPlaybackManager
+
+  init() {
+    audioManager = AudioPlaybackManager()
+    client = Mia21Client(
       apiKey: "mia_sk_cust_3406ioja0VU6GQGQ_kAkf8KBtvjuxXb4p6oxsO-6ejwNpAzynsVYCVD3a5no",
-      userId: appId
+      userId: appId,
+      environment: .production
     )
-  }
 
-  private let audioManager = AudioPlaybackManager()
+    Mia21Client.setLogLevel(.debug)
+  }
 
   var body: some Scene {
     WindowGroup {

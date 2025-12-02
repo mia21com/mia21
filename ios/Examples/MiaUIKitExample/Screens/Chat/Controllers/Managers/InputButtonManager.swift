@@ -65,7 +65,5 @@ final class InputButtonManager {
     recordButton?.isEnabled = !isActive
     recordButton?.alpha = isActive ? 0.5 : 1.0
     
-    sendButton?.isEnabled = !isActive
-    sendButton?.alpha = isActive ? 0.5 : 1.0
   }
 }

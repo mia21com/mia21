@@ -17,11 +17,8 @@ struct ChatView: View {
   @State private var isSideMenuVisible = false
   @State private var inputText = ""
   @FocusState private var isInputFocused: Bool
-  @State private var isUserScrolling = false
-  @State private var shouldAutoScroll = true
-  private let autoScrollThreshold: CGFloat = 50
+  @State private var userHasScrolledUp = false
   @State private var previousMessageCount = 0
-  @State private var hasAppeared = false
   private let client: Mia21Client
   private let appId: String
   @Environment(\.scenePhase) private var scenePhase
@@ -86,26 +83,35 @@ struct ChatView: View {
               .disabled(viewModel.isHandsFreeModeEnabled)
             }
           }
-          .onAppear {
-            hasAppeared = true
-          }
           .task {
             await viewModel.initializeChat()
           }
           .onChange(of: scenePhase) { _ in
             if scenePhase == .background {
               Task {
-                do {
-                  try await client.close(spaceId: nil)
-                  print("✅ Chat session closed when entering background")
-                } catch {
-                  print("⚠️ Failed to close chat session: \(error.localizedDescription)")
-                }
+                try? await client.close(spaceId: nil)
               }
+            }
+          }
+          .onChange(of: viewModel.transcriptionResult) { result in
+            if let result = result {
+              inputText = result.text
+              if result.restoreKeyboard {
+                isInputFocused = true
+              }
+              // Clear the result after processing
+              viewModel.transcriptionResult = nil
             }
           }
       }
       .offset(x: isSideMenuVisible ? 280 : 0)
+      .alert(item: $viewModel.currentError) { error in
+        Alert(
+          title: Text(error.title),
+          message: Text(error.message),
+          dismissButton: .default(Text("OK"))
+        )
+      }
       
       // Side menu - always rendered, positioned offscreen when hidden
       sideMenuContent
@@ -145,42 +151,48 @@ struct ChatView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
-        .background(
-          GeometryReader { geometry in
-            Color.clear
-              .preference(
-                key: ScrollOffsetPreferenceKey.self,
-                value: geometry.frame(in: .named("scroll")).minY
-              )
-          }
-        )
       }
-      .coordinateSpace(name: "scroll")
       .scrollDismissesKeyboard(.immediately)
       .contentShape(Rectangle())
       .onTapGesture {
         isInputFocused = false
       }
-      .onPreferenceChange(ScrollOffsetPreferenceKey.self) { offset in
-        checkScrollPosition(proxy: proxy, offset: offset)
-      }
+      .simultaneousGesture(
+        DragGesture(minimumDistance: 5)
+          .onChanged { _ in
+            // User started scrolling - disable auto-scroll
+            if !userHasScrolledUp {
+              userHasScrolledUp = true
+            }
+          }
+      )
       .onChange(of: viewModel.messages.count) { newCount in
-        updateMessages(proxy: proxy, newCount: newCount)
-      }
-      .onChange(of: viewModel.messages.last?.text ?? "") { _ in
-        // Only update if not actively scrolling
-        if !isUserScrolling && shouldAutoScroll && !viewModel.messages.isEmpty {
-          DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-            if let lastMessage = self.viewModel.messages.last {
-              withAnimation(nil) {
-                proxy.scrollTo(lastMessage.id, anchor: .bottom)
+        // New message added - scroll to bottom only if user hasn't scrolled up
+        if newCount > previousMessageCount {
+          if !userHasScrolledUp {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+              if let lastMessage = viewModel.messages.last {
+                withAnimation {
+                  proxy.scrollTo(lastMessage.id, anchor: .bottom)
+                }
               }
             }
+          }
+          previousMessageCount = newCount
+        }
+      }
+      .onChange(of: viewModel.messages.last?.text ?? "") { _ in
+        // Streaming update - only scroll if user hasn't scrolled up
+        guard !userHasScrolledUp else { return }
+        
+        if let lastMessage = viewModel.messages.last {
+          withAnimation(nil) {
+            proxy.scrollTo(lastMessage.id, anchor: .bottom)
           }
         }
       }
       .onChange(of: isInputFocused) { focused in
-        if focused && shouldAutoScroll {
+        if focused && !userHasScrolledUp {
           DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             if let lastMessage = viewModel.messages.last {
               withAnimation {
@@ -190,16 +202,6 @@ struct ChatView: View {
           }
         }
       }
-      .simultaneousGesture(
-        DragGesture()
-          .onChanged { _ in
-            isUserScrolling = true
-          }
-          .onEnded { _ in
-            isUserScrolling = false
-            checkScrollPosition(proxy: proxy, offset: 0)
-          }
-      )
     }
   }
 
@@ -209,15 +211,17 @@ struct ChatView: View {
       isInputFocused: $isInputFocused,
       isLoading: viewModel.isLoading,
       canSend: canSend,
-      isRecording: false,
+      isRecording: viewModel.isRecording,
       isHandsFreeModeEnabled: viewModel.isHandsFreeModeEnabled,
-      isRecordingState: false,
+      isRecordingState: viewModel.isRecording,
       isTranscribingState: viewModel.isTranscribing,
       onSend: sendMessage,
-      onRecord: {
-        // Recording logic moved to View layer - TODO: implement
-      },
+      onRecord: toggleRecording,
       onHandsFreeTapped: {
+        // Dismiss keyboard when enabling hands-free mode
+        if !viewModel.isHandsFreeModeEnabled {
+          isInputFocused = false
+        }
         viewModel.toggleHandsFreeMode()
       }
     )
@@ -244,6 +248,7 @@ struct ChatView: View {
         onSpaceChanged: { space, bot in
           viewModel.currentSpaceId = space.spaceId
           viewModel.currentBotId = bot?.botId
+          userHasScrolledUp = false
           viewModel.clearChat()
           withAnimation(.easeIn(duration: 0.25)) {
             isSideMenuVisible = false
@@ -251,18 +256,21 @@ struct ChatView: View {
         },
         onBotChanged: { bot in
           viewModel.currentBotId = bot.botId
+          userHasScrolledUp = false
           viewModel.clearChat()
           withAnimation(.easeIn(duration: 0.25)) {
             isSideMenuVisible = false
           }
         },
         onNewChat: {
+          userHasScrolledUp = false
           viewModel.clearChat()
           withAnimation(.easeIn(duration: 0.25)) {
             isSideMenuVisible = false
           }
         },
         onSelectChat: { conversationId in
+          userHasScrolledUp = false
           Task {
             await viewModel.loadConversation(conversationId)
           }
@@ -280,7 +288,7 @@ struct ChatView: View {
   // MARK: - Computed Properties
 
   private var canSend: Bool {
-    !inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !viewModel.isLoading
+    !inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !viewModel.isLoading && viewModel.isChatInitialized
   }
 
   // MARK: - Actions
@@ -290,7 +298,9 @@ struct ChatView: View {
     guard !text.isEmpty else { return }
 
     let messageText = text
-    shouldAutoScroll = true
+    
+    // Reset scroll state when user sends a message - they want to see the response
+    userHasScrolledUp = false
     
     // Clear input immediately
     inputText = ""
@@ -300,60 +310,17 @@ struct ChatView: View {
 
     Task {
       await viewModel.sendMessage(messageText)
-      await MainActor.run {
-        isInputFocused = true
-      }
     }
   }
-
-  // MARK: - Message Updates
-
-  private func updateMessages(proxy: ScrollViewProxy, newCount: Int) {
-    let currentCount = newCount
-    let previousCount = previousMessageCount
-
-    if currentCount > previousCount {
-      shouldAutoScroll = true
-      DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-        scrollToBottom(proxy: proxy, animated: true)
-      }
-    } else if currentCount == previousCount && currentCount > 0 {
-      if shouldAutoScroll {
-        scrollToBottom(proxy: proxy, animated: false)
-      }
+  
+  private func toggleRecording() {
+    if viewModel.isRecording {
+      viewModel.stopRecording()
     } else {
-      shouldAutoScroll = true
-      scrollToBottom(proxy: proxy, animated: false)
-    }
-
-    previousMessageCount = currentCount
-  }
-
-  // MARK: - Smart Auto-Scroll Helpers
-
-  private func scrollToBottom(proxy: ScrollViewProxy, animated: Bool) {
-    guard !viewModel.messages.isEmpty else { return }
-    guard shouldAutoScroll else { return }
-
-    if let lastMessage = viewModel.messages.last {
-      if animated {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-          guard self.shouldAutoScroll else { return }
-          withAnimation(.easeOut(duration: 0.3)) {
-            proxy.scrollTo(lastMessage.id, anchor: .bottom)
-          }
-        }
-      } else {
-        withAnimation(nil) {
-          proxy.scrollTo(lastMessage.id, anchor: .bottom)
-        }
-      }
-    }
-  }
-
-  private func checkScrollPosition(proxy: ScrollViewProxy, offset: CGFloat) {
-    if isUserScrolling {
-      shouldAutoScroll = abs(offset) < autoScrollThreshold
+      let keyboardWasVisible = isInputFocused
+      // Dismiss keyboard when starting recording
+      isInputFocused = false
+      viewModel.startRecording(currentText: inputText, keyboardWasVisible: keyboardWasVisible)
     }
   }
 }

@@ -191,10 +191,9 @@ final class RealtimeAudioCapture {
     let isPlayAndRecordConfigured = audioSession.category == .playAndRecord
 
     if !isPlayAndRecordConfigured {
-      try audioSession.setCategory(.playAndRecord, mode: .voiceChat, options: [
+      try audioSession.setCategory(.playAndRecord, mode: .default, options: [
         .allowBluetoothHFP,
         .defaultToSpeaker,
-        .duckOthers,
         .mixWithOthers
       ])
     }

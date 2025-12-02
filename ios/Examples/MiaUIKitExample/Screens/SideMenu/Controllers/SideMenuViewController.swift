@@ -389,7 +389,6 @@ final class SideMenuViewController: UIViewController {
 
   private func handleNewChat() {
     viewModel.clearConversationSelection()
-    onNewChat?()
   }
   
   private func handleSpaceSelection(_ space: Space) {

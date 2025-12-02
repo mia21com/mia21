@@ -15,31 +15,30 @@ struct MessageBubble: View {
   let message: ChatMessage
 
   var body: some View {
-    HStack {
+    HStack(alignment: .top, spacing: 0) {
       if message.isUser {
-        Spacer()
+        Spacer(minLength: 0)
       }
 
-      if message.isTypingIndicator || message.isProcessingAudio {
-        TypingIndicatorView()
-          .padding(.horizontal, 14)
-          .padding(.vertical, 12)
-          .background(message.isProcessingAudio ? Color.blue.opacity(0.7) : Color(.secondarySystemBackground))
-          .cornerRadius(18)
-      } else {
-        Text(parseMarkdown(message.text))
-          .font(.system(size: 16))
-          .foregroundColor(message.isUser ? .white : .primary)
-          .padding(.horizontal, 14)
-          .padding(.vertical, 12)
-          .background(message.isUser ? Color.blue : Color(.secondarySystemBackground))
-          .cornerRadius(18)
-          .textSelection(.enabled)
+      Group {
+        if message.isTypingIndicator || message.isProcessingAudio {
+          TypingIndicatorView()
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .background(message.isProcessingAudio ? Color.blue.opacity(0.7) : Color(.secondarySystemBackground))
+            .cornerRadius(18)
+        } else {
+          Text(parseMarkdown(message.text))
+            .font(.system(size: 16))
+            .foregroundColor(message.isUser ? .white : .primary)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .background(message.isUser ? Color.blue : Color(.secondarySystemBackground))
+            .cornerRadius(18)
+            .textSelection(.enabled)
+        }
       }
-
-      if !message.isUser && !message.isProcessingAudio {
-        Spacer()
-      }
+      .frame(maxWidth: UIScreen.main.bounds.width * 0.8, alignment: message.isUser ? .trailing : .leading)
     }
   }
 
