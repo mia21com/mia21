@@ -1,9 +1,10 @@
 # Gradle
 .gradle/
 build/
-gradle/
-gradlew
-gradlew.bat
+# NOTE: Do NOT ignore gradle wrapper files - they are needed for JitPack and CI builds
+# gradle/
+# gradlew
+# gradlew.bat
 
 # Android Studio / IntelliJ IDEA
 .idea/
