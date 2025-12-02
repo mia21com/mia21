@@ -9,3 +9,4 @@ before_install:
   - export JAVA_HOME=$(sdk home java 17.0.11-tem || echo $JAVA_HOME)
 install:
   - cd android && ./gradlew clean :lib:assembleRelease :lib:publishToMavenLocal --no-daemon --stacktrace
+
