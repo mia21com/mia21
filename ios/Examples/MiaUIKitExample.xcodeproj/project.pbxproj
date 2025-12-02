@@ -340,7 +340,7 @@
 			);
 			mainGroup = BB0000010000000000000014;
 			packageReferences = (
-				BB000001000000000000001D /* XCLocalSwiftPackageReference "../" */,
+				BB000001000000000000001D /* XCLocalSwiftPackageReference "../.." */,
 				BB0000010000000000000024 /* XCRemoteSwiftPackageReference "RealTimeCutVADLibrary" */,
 			);
 			productRefGroup = BB0000010000000000000016 /* Products */;
@@ -604,9 +604,9 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		BB000001000000000000001D /* XCLocalSwiftPackageReference "../" */ = {
+		BB000001000000000000001D /* XCLocalSwiftPackageReference "../.." */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = ../;
+			relativePath = ../..;
 		};
 /* End XCLocalSwiftPackageReference section */
 
@@ -624,7 +624,7 @@
 /* Begin XCSwiftPackageProductDependency section */
 		BB0000010000000000000011 /* Mia21 */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = BB000001000000000000001D /* XCLocalSwiftPackageReference "../" */;
+			package = BB000001000000000000001D /* XCLocalSwiftPackageReference "../.." */;
 			productName = Mia21;
 		};
 		BB0000010000000000000023 /* RealTimeCutVADLibrary */ = {
