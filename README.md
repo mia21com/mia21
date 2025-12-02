@@ -38,20 +38,30 @@ let response = try await client.chat(message: "Hello!")
 
 ---
 
-### 🤖 Android SDK
+### 🤖 [Android SDK](./android/)
 
-🚧 **Coming Soon**
+[![Platform](https://img.shields.io/badge/platform-Android%205.0+-green.svg)](./android/)
+[![Kotlin](https://img.shields.io/badge/Kotlin-1.9+-purple.svg)](./android/)
 
-Native Kotlin SDK for Android is currently in development.
+Native Kotlin SDK for Android with Jetpack Compose.
 
-**Planned Features:**
-- ⏳ Kotlin coroutines
-- ⏳ Real-time streaming
-- ⏳ Voice input support
-- ⏳ Multi-bot support
-- ⏳ Jetpack Compose examples
+**Quick Start:**
+```kotlin
+import com.mia21.Mia21Client
 
-Stay tuned for updates!
+val client = Mia21Client(apiKey = "YOUR_API_KEY")
+client.initialize()
+val response = client.chat("Hello!")
+```
+
+**Features:**
+- ✅ Real-time streaming responses
+- ✅ Voice input (speech-to-text)
+- ✅ Multi-bot support
+- ✅ Conversation management
+- ✅ Jetpack Compose example
+
+👉 [**Android Documentation**](./android/README.md) | [Example](./android/example-app/)
 
 ---
 
@@ -68,36 +78,49 @@ Sign up at [mia21.com](https://mia21.com/signup) to get your free API key.
 
 **In Xcode:**
 1. File → Add Package Dependencies
-2. Enter URL: `https://github.com/yourusername/mia-sdks.git`
+2. Enter URL: `https://github.com/mia21com/mia21.git`
 3. Select the `Mia21` product
 4. Add to your target
 
 **Or in Package.swift:**
 ```swift
 dependencies: [
-    .package(url: "https://github.com/yourusername/mia-sdks.git", from: "1.0.0")
+    .package(url: "https://github.com/mia21com/mia21.git", from: "1.0.0")
 ]
 ```
 </details>
 
 <details>
-<summary><b>Android - Coming Soon</b></summary>
+<summary><b>Android - Gradle</b></summary>
 
-The Android SDK is currently in development. Check back soon for installation instructions!
+**In settings.gradle.kts:**
+```kotlin
+dependencyResolutionManagement {
+    repositories {
+        maven { url = uri("https://jitpack.io") }
+    }
+}
+```
+
+**In app/build.gradle.kts:**
+```kotlin
+dependencies {
+    implementation("com.github.mia21com:mia21:1.0.0")
+}
+```
 </details>
 
 ## ✨ Core Features
 
 | Feature | iOS | Android | Description |
 |---------|:---:|:-------:|-------------|
-| **Real-time Streaming** | ✅ | 🚧 | Word-by-word responses |
-| **Voice Input** | ✅ | 🚧 | Speech-to-text built-in |
-| **Conversation History** | ✅ | 🚧 | Persistent chat storage |
-| **Multi-Bot Support** | ✅ | 🚧 | Switch AI personalities |
-| **Spaces** | ✅ | 🚧 | Organize by context/topic |
-| **BYOK** | ✅ | 🚧 | Use your own LLM keys |
-| **Async/Await** | ✅ | 🚧 | Modern concurrency |
-| **Error Handling** | ✅ | 🚧 | Comprehensive error types |
+| **Real-time Streaming** | ✅ | ✅ | Word-by-word responses |
+| **Voice Input** | ✅ | ✅ | Speech-to-text built-in |
+| **Conversation History** | ✅ | ✅ | Persistent chat storage |
+| **Multi-Bot Support** | ✅ | ✅ | Switch AI personalities |
+| **Spaces** | ✅ | ✅ | Organize by context/topic |
+| **Async/Await** | ✅ | ✅ | Modern concurrency |
+| **Error Handling** | ✅ | ✅ | Comprehensive error types |
 
 ---
 
@@ -105,12 +128,12 @@ The Android SDK is currently in development. Check back soon for installation in
 
 ### Platform-Specific Docs
 - 📱 [**iOS Full Documentation**](./ios/README.md) - Complete guide with examples
-- 🤖 **Android Documentation** - Coming Soon
+- 🤖 [**Android Full Documentation**](./android/README.md) - Complete guide with examples
 
 ### Example Apps
 - 🎨 [SwiftUI Example](./ios/Examples/MiaSwiftUIExample/) - Modern declarative UI
 - 📱 [UIKit Example](./ios/Examples/MiaUIKitExample/) - Traditional UIKit
-- 🚀 **Android Example** - Coming Soon
+- 🚀 [Android Example](./android/example-app/) - Jetpack Compose
 
 ---
 

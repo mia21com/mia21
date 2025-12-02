@@ -1,16 +1,19 @@
 # 📱 Mia21 Android Example App
 
-A clean, simple Android chat app demonstrating how to use the Mia21 SDK.
+A production-ready Jetpack Compose chat app demonstrating how to use the Mia21 SDK.
 
 ## ✨ Features Demonstrated
 
 - ✅ **SDK Initialization** - Setting up the Mia21 client
-- ✅ **Chat UI** - Message bubbles with user/bot styling
-- ✅ **Send Messages** - Text-based chat
-- ✅ **Streaming Responses** - Real-time word-by-word display
-- ✅ **Typing Indicators** - Shows when bot is responding
-- ✅ **Error Handling** - Proper error messages
-- ✅ **Material Design** - Clean, modern UI
+- ✅ **Chat UI** - Modern message bubbles with Jetpack Compose
+- ✅ **Real-time Streaming** - Word-by-word response display
+- ✅ **Voice Input** - Speech-to-text transcription
+- ✅ **Voice Output** - Text-to-speech with ElevenLabs
+- ✅ **Conversation History** - Load and continue past chats
+- ✅ **Multi-Space/Bot** - Switch between spaces and bots
+- ✅ **Side Menu** - Navigation with swipe-to-delete
+- ✅ **Error Handling** - Proper error messages and states
+- ✅ **Material Design 3** - Modern, clean UI
 
 ## 📋 Prerequisites
 
@@ -23,67 +26,81 @@ A clean, simple Android chat app demonstrating how to use the Mia21 SDK.
 
 ### Option 1: Open in Android Studio (Recommended)
 
-1. **Open the project:**
+1. **Clone the repository:**
    ```bash
-   # Navigate to the example app
-   cd /Users/admin/mia-my-folder/android/example-app
-   
-   # Open in Android Studio
-   open -a "Android Studio" .
+   git clone https://github.com/mia21com/mia21.git
+   cd mia21/android/example-app
    ```
-   Or: File → Open → Select `example-app` folder
 
-2. **Wait for Gradle sync** (first time takes a few minutes)
+2. **Open in Android Studio:**
+   - File → Open → Select `example-app` folder
+   - Or run: `open -a "Android Studio" .`
 
-3. **Run the app:**
+3. **Wait for Gradle sync** (first time takes a few minutes)
+
+4. **Run the app:**
    - Click the green ▶️ "Run" button
    - Or press `Ctrl+R` (Mac: `⌘+R`)
    - Select an emulator or connected device
 
-4. **Enter your API key** and start chatting!
+5. **Enter your API key** and start chatting!
 
 ### Option 2: Command Line Build
 
 ```bash
-cd /Users/admin/mia-my-folder/android/example-app
+cd mia21/android/example-app
 
 # Build the app
 ./gradlew build
 
 # Install on connected device/emulator
 ./gradlew installDebug
-
-# Or build and install in one command
-./gradlew installDebug
 ```
 
 ## 📖 How to Use the App
 
-1. **Enter API Key**: Paste your Mia21 API key in the first field
-2. **Initialize**: Click "Initialize Chat" button
-3. **Send Message**: 
-   - Type a message in the text field
-   - Click "Send" for instant response
-   - Click "Stream" for word-by-word response
-4. **View Response**: See the bot's reply in the response area
+1. **Launch**: The app initializes automatically with a welcome message
+2. **Chat**: Type a message and tap send
+3. **Voice Input**: Tap the microphone to record, tap again to transcribe
+4. **Voice Output**: Enable voice mode for spoken responses
+5. **Side Menu**: Swipe from left or tap menu icon
+   - Switch spaces and bots
+   - View conversation history
+   - Start new chats
+   - Swipe left on conversations to delete
 
 ## 🎯 Code Structure
 
 ```
 example-app/
 ├── app/
-│   ├── build.gradle.kts          # App dependencies
+│   ├── build.gradle.kts
 │   └── src/main/
-│       ├── AndroidManifest.xml   # App configuration
-│       ├── java/com/mia21/example/
-│       │   └── MainActivity.kt   # Main app logic
-│       └── res/
-│           ├── layout/
-│           │   └── activity_main.xml  # UI layout
-│           └── values/
-│               └── strings.xml   # App strings
-├── build.gradle.kts              # Project-level config
-└── settings.gradle.kts           # Module configuration
+│       ├── AndroidManifest.xml
+│       └── java/com/mia21/example/
+│           ├── MainActivity.kt           # Entry point
+│           ├── theme/
+│           │   └── Theme.kt              # Material 3 theming
+│           ├── ui/
+│           │   ├── MiaApp.kt             # Main app composable
+│           │   ├── ChatView.kt           # Chat screen
+│           │   ├── ChatInputView.kt      # Input field + buttons
+│           │   ├── MessageBubble.kt      # Message display
+│           │   ├── SideMenuView.kt       # Navigation drawer
+│           │   ├── LoadingView.kt        # Loading screen
+│           │   └── TypewriterText.kt     # Animated text
+│           ├── viewmodels/
+│           │   ├── ChatViewModel.kt      # Chat logic
+│           │   ├── LoadingViewModel.kt   # Init logic
+│           │   └── SideMenuViewModel.kt  # Menu logic
+│           └── utils/
+│               ├── AudioPlaybackManager.kt   # Voice output
+│               ├── AudioRecorderManager.kt   # Voice input
+│               ├── HandsFreeAudioManager.kt  # Hands-free mode
+│               ├── Constants.kt              # App constants
+│               └── UserPreferences.kt        # Settings storage
+├── build.gradle.kts
+└── settings.gradle.kts
 ```
 
 ## 🔧 Key Code Examples
@@ -103,31 +120,35 @@ val response = client.initialize(
 )
 ```
 
-### Send Message
-```kotlin
-val response = client.chat("Hello!")
-println(response.message)
-```
-
-### Stream Response
+### Send Message with Streaming
 ```kotlin
 val messages = listOf(
     ChatMessage(role = MessageRole.USER, content = "Tell me a joke")
 )
 
 client.streamChat(messages).collect { chunk ->
-    print(chunk)  // Display each word as it arrives
+    // Update UI with each word
+    botResponse += chunk
 }
 ```
 
-## 📱 Screenshots
+### Voice Output with ElevenLabs
+```kotlin
+val voiceConfig = VoiceConfig(
+    enabled = true,
+    voiceId = "21m00Tcm4TlvDq8ikWAM",
+    stability = 0.5,
+    similarityBoost = 0.75
+)
 
-The app provides a simple interface with:
-- API key input field
-- Message input area
-- Send and Stream buttons
-- Response display area
-- Loading indicator
+client.streamChatWithVoice(messages, options, voiceConfig).collect { event ->
+    when (event) {
+        is StreamEvent.Text -> updateText(event.content)
+        is StreamEvent.Audio -> playAudio(event.audioData)
+        is StreamEvent.Done -> onComplete()
+    }
+}
+```
 
 ## 🐛 Troubleshooting
 
@@ -140,7 +161,7 @@ java -version  # Should show version 17 or higher
 ```
 
 **Issue**: SDK not found
-**Solution**: The example uses the local SDK module. Make sure you're running from the `example-app` directory.
+**Solution**: The example uses the local SDK module. Make sure you're running from the correct directory.
 
 ### Runtime Issues
 
@@ -164,7 +185,7 @@ dependencies {
     // implementation(project(":mia21-sdk"))
     
     // Use JitPack instead:
-    implementation("com.github.nataliakozlovska:mia:v1.0.0")
+    implementation("com.github.mia21com:mia21:1.0.0")
 }
 ```
 
@@ -175,14 +196,6 @@ And remove from `settings.gradle.kts`:
 // project(":mia21-sdk").projectDir = file("../lib")
 ```
 
-### Add More Features
-
-Check the [Android SDK documentation](../README.md) for more features:
-- Voice transcription
-- Multi-bot support
-- Conversation history
-- Spaces management
-
 ## 📚 Learn More
 
 - [Android SDK Documentation](../README.md)
@@ -192,4 +205,3 @@ Check the [Android SDK documentation](../README.md) for more features:
 ## 📄 License
 
 MIT License - Same as the parent SDK
-

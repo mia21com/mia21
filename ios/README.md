@@ -6,7 +6,7 @@ The official Swift SDK for Mia21 AI Chat API - production-ready, fully tested, a
 
 [![Platform](https://img.shields.io/badge/platform-iOS%2015%2B%20%7C%20macOS%2012%2B-lightgrey.svg)](https://swift.org)
 [![Swift](https://img.shields.io/badge/Swift-5.9+-orange.svg)](https://swift.org)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](../LICENSE)
 [![SPM](https://img.shields.io/badge/SPM-compatible-brightgreen.svg)](https://swift.org/package-manager)
 
 ---
@@ -20,9 +20,7 @@ The official Swift SDK for Mia21 AI Chat API - production-ready, fully tested, a
 - [Advanced Features](#-advanced-features)
 - [Example Apps](#-example-apps)
 - [API Reference](#-api-reference)
-- [Best Practices](#-best-practices)
 - [Troubleshooting](#-troubleshooting)
-- [Support](#-support)
 
 ---
 
@@ -69,7 +67,6 @@ That's it! You're ready to build. For more examples, see the sections below.
 - ✅ **Voice Input** - Speech-to-text built-in
 - ✅ **Multi-Bot** - Switch AI personalities
 - ✅ **Spaces** - Organize by context/topic
-- ✅ **BYOK** - Use your own LLM keys
 
 ### 📱 Platform Support
 - **iOS** 15.0+ (iPhone & iPad)
@@ -389,38 +386,6 @@ try await client.streamChat(
 }
 ```
 
-### 🔑 BYOK (Bring Your Own Key)
-
-Use your own OpenAI or Google Gemini API key for direct billing:
-
-```swift
-// ✅ Initialize with your LLM key
-let client = Mia21Client(
-    customerLlmKey: "sk-proj-..." // Your OpenAI or Gemini key
-)
-
-// Specify which LLM to use
-try await client.initialize(
-    options: InitializeOptions(
-        llmType: .openai,  // or .gemini
-        generateFirstMessage: true
-    )
-)
-
-// 💰 All requests now bill directly to YOUR account
-// ✅ No Mia21 API usage fees (just platform fees)
-```
-
-**Why Use BYOK?**
-- 💰 **Lower cost** - Pay LLM providers directly
-- 🔒 **More control** - Your own rate limits
-- 📊 **Direct analytics** - See usage in your LLM dashboard
-- 🎯 **Custom models** - Use fine-tuned models from your account
-
-**Supported LLMs:**
-- ✅ **OpenAI** - GPT-4, GPT-4 Turbo, GPT-3.5
-- ✅ **Google Gemini** - Gemini Pro, Gemini Pro Vision
-
 ---
 
 ## 🛡️ Error Handling
@@ -544,7 +509,6 @@ open MiaSwiftUIExample.xcodeproj  # or MiaUIKitExample.xcodeproj
 - `language: String?` - Language code (e.g., "en")
 - `generateFirstMessage: Bool` - Bot greets user
 - `incognitoMode: Bool` - Don't save conversation
-- `customerLlmKey: String?` - BYOK key
 - `spaceConfig: SpaceConfig?` - Custom space config
 
 **ChatOptions:**
@@ -554,7 +518,6 @@ open MiaSwiftUIExample.xcodeproj  # or MiaUIKitExample.xcodeproj
 - `temperature: Double?` - LLM temperature (0.0-2.0)
 - `maxTokens: Int?` - Max response length
 - `llmType: LLMType?` - Override LLM
-- `customerLlmKey: String?` - BYOK key
 
 ---
 
@@ -654,7 +617,7 @@ let client = Mia21Client(
 
 ## 📄 License
 
-This SDK is released under the **MIT License**. See [LICENSE](LICENSE) for full details.
+This SDK is released under the **MIT License**. See [LICENSE](../LICENSE) for full details.
 
 ```
 Copyright (c) 2025 Mia21
