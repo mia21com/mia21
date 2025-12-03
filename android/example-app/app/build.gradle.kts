@@ -41,8 +41,8 @@ android {
 }
 
 dependencies {
-    // Mia21 SDK - Local module
-    implementation(project(":lib"))
+    // Mia21 SDK
+    implementation("com.github.mia21com:mia21:0.0.3")
 
     // Android Core
     implementation("androidx.core:core-ktx:1.17.0")

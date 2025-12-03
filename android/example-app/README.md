@@ -19,7 +19,7 @@ A production-ready Jetpack Compose chat app demonstrating how to use the Mia21 S
 
 - **Android Studio** Hedgehog or later
 - **JDK 17** or higher
-- **Android SDK** with API 21+ (Android 5.0+)
+- **Android SDK** with API 23+ (Android 6.0+)
 - **Mia21 API Key** from [mia21.com](https://mia21.com)
 
 ## 🚀 How to Build and Run
@@ -161,7 +161,7 @@ java -version  # Should show version 17 or higher
 ```
 
 **Issue**: SDK not found
-**Solution**: The example uses the local SDK module. Make sure you're running from the correct directory.
+**Solution**: Make sure JitPack repository is added to your `settings.gradle.kts` and the dependency is synced.
 
 ### Runtime Issues
 
@@ -173,28 +173,6 @@ java -version  # Should show version 17 or higher
 
 **Issue**: App crashes on launch
 **Solution**: Check logcat in Android Studio for error messages
-
-## 📝 Modifying the Example
-
-### Use JitPack Instead of Local SDK
-
-Edit `app/build.gradle.kts`:
-```kotlin
-dependencies {
-    // Comment out local module:
-    // implementation(project(":mia21-sdk"))
-    
-    // Use JitPack instead:
-    implementation("com.github.mia21com:mia21:0.0.1")
-}
-```
-
-And remove from `settings.gradle.kts`:
-```kotlin
-// Remove these lines:
-// include(":mia21-sdk")
-// project(":mia21-sdk").projectDir = file("../lib")
-```
 
 ## 📚 Learn More
 

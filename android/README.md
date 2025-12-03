@@ -4,7 +4,7 @@
 
 The official Kotlin SDK for Mia21 AI Chat API - production-ready, fully tested, and designed for real-world apps.
 
-[![Platform](https://img.shields.io/badge/platform-Android%205.0+-green.svg)](https://developer.android.com)
+[![Platform](https://img.shields.io/badge/platform-Android%206.0+-green.svg)](https://developer.android.com)
 [![Kotlin](https://img.shields.io/badge/Kotlin-1.9+-purple.svg)](https://kotlinlang.org)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](../LICENSE)
 
@@ -78,7 +78,7 @@ That's it! You're ready to build. For more examples, see the sections below.
 - ✅ **Spaces** - Organize by context/topic
 
 ### 📱 Platform Support
-- **Android** 5.0+ (API level 21+)
+- **Android** 6.0+ (API level 23+)
 
 ### 🎨 Framework Support
 - **Jetpack Compose** - Modern declarative UI

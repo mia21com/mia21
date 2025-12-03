@@ -40,12 +40,26 @@ let response = try await client.chat(message: "Hello!")
 
 ### 🤖 [Android SDK](./android/)
 
-[![Platform](https://img.shields.io/badge/platform-Android%205.0+-green.svg)](./android/)
+[![Platform](https://img.shields.io/badge/platform-Android%206.0+-green.svg)](./android/)
 [![Kotlin](https://img.shields.io/badge/Kotlin-1.9+-purple.svg)](./android/)
 
 Native Kotlin SDK for Android with Jetpack Compose.
 
 **Quick Start:**
+```kotlin
+// settings.gradle.kts
+dependencyResolutionManagement {
+    repositories {
+        maven { url = uri("https://jitpack.io") }
+    }
+}
+
+// app/build.gradle.kts
+dependencies {
+    implementation("com.github.mia21com:mia21:0.0.3")
+}
+```
+
 ```kotlin
 import com.mia21.Mia21Client
 
@@ -105,7 +119,7 @@ dependencyResolutionManagement {
 **In app/build.gradle.kts:**
 ```kotlin
 dependencies {
-    implementation("com.github.mia21com:mia21:0.0.1")
+    implementation("com.github.mia21com:mia21:0.0.3")
 }
 ```
 </details>
