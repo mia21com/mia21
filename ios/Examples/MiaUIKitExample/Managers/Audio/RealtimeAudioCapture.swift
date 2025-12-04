@@ -103,16 +103,16 @@ final class RealtimeAudioCapture {
     bufferCount = 0
 
     NotificationCenter.default.removeObserver(self, name: AVAudioSession.interruptionNotification, object: nil)
+    NotificationCenter.default.removeObserver(self, name: AVAudioSession.routeChangeNotification, object: nil)
 
     if let engine = audioEngine {
       if engine.isRunning {
         engine.stop()
-        print("RealtimeAudioCapture: Audio engine stopped")
       }
-
       if let inputNode = inputNode {
         inputNode.removeTap(onBus: 0)
       }
+      engine.reset()
     }
 
     audioEngine = nil
@@ -120,14 +120,10 @@ final class RealtimeAudioCapture {
 
     DispatchQueue.main.async {
       let audioSession = AVAudioSession.sharedInstance()
+      let handsFreeActive = HandsFreeAudioManager.isInitialized && HandsFreeAudioManager.shared.isActive
       
-      // Deactivate audio session
-      print("RealtimeAudioCapture: Deactivating audio session")
-      do {
-        try audioSession.setActive(false, options: .notifyOthersOnDeactivation)
-        print("RealtimeAudioCapture: Audio session deactivated successfully")
-      } catch {
-        print("RealtimeAudioCapture: Audio session deactivation failed: \(error)")
+      if !handsFreeActive {
+        try? audioSession.setActive(false, options: .notifyOthersOnDeactivation)
       }
     }
   }
@@ -186,27 +182,50 @@ final class RealtimeAudioCapture {
       name: AVAudioSession.interruptionNotification,
       object: audioSession
     )
+    
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(handleAudioRouteChange),
+      name: AVAudioSession.routeChangeNotification,
+      object: audioSession
+    )
 
-    // Check if audio session is already configured for playAndRecord
     let isPlayAndRecordConfigured = audioSession.category == .playAndRecord
 
     if !isPlayAndRecordConfigured {
       try audioSession.setCategory(.playAndRecord, mode: .default, options: [
-        .allowBluetoothHFP,
+        .allowBluetooth,
         .defaultToSpeaker,
         .mixWithOthers
       ])
     }
 
-    try audioSession.setPreferredSampleRate(sampleRate)
+    // Lock to current sample rate - don't force 16kHz
+    let currentSampleRate = audioSession.sampleRate
+    if currentSampleRate > 0 {
+      try? audioSession.setPreferredSampleRate(currentSampleRate)
+    }
 
     let preferredBufferDuration = Double(bufferSize) / sampleRate
     try audioSession.setPreferredIOBufferDuration(preferredBufferDuration)
 
-    // Move setActive to background thread to prevent hangs
-    DispatchQueue.global(qos: .userInitiated).async {
-      // Always try to activate - system handles conflicts gracefully
-      try? audioSession.setActive(true, options: .notifyOthersOnDeactivation)
+    try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
+  }
+  
+  @objc private func handleAudioRouteChange(notification: Notification) {
+    guard let userInfo = notification.userInfo,
+          let reasonValue = userInfo[AVAudioSessionRouteChangeReasonKey] as? UInt,
+          let reason = AVAudioSession.RouteChangeReason(rawValue: reasonValue) else {
+      return
+    }
+    
+    switch reason {
+    case .newDeviceAvailable, .oldDeviceUnavailable:
+      if isCapturing {
+        forceRestart()
+      }
+    default:
+      break
     }
   }
 
@@ -222,11 +241,13 @@ final class RealtimeAudioCapture {
     }
 
     let inputFormat = inputNode.outputFormat(forBus: 0)
+    let actualSampleRate = inputFormat.sampleRate > 0 ? inputFormat.sampleRate : sampleRate
+    let actualChannels = inputFormat.channelCount > 0 ? min(inputFormat.channelCount, channels) : channels
     
     guard let tapFormat = AVAudioFormat(
       commonFormat: .pcmFormatFloat32,
-      sampleRate: inputFormat.sampleRate > 0 ? inputFormat.sampleRate : sampleRate,
-      channels: inputFormat.channelCount > 0 ? min(inputFormat.channelCount, channels) : channels,
+      sampleRate: actualSampleRate,
+      channels: actualChannels,
       interleaved: false
     ) else {
       throw AudioCaptureError.formatSetupFailed

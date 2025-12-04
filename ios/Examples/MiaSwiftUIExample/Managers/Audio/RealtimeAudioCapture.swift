@@ -92,6 +92,7 @@ final class RealtimeAudioCapture {
     bufferCount = 0
 
     NotificationCenter.default.removeObserver(self, name: AVAudioSession.interruptionNotification, object: nil)
+    NotificationCenter.default.removeObserver(self, name: AVAudioSession.routeChangeNotification, object: nil)
 
     if let engine = audioEngine {
       if engine.isRunning {
@@ -100,13 +101,19 @@ final class RealtimeAudioCapture {
       if let inputNode = inputNode {
         inputNode.removeTap(onBus: 0)
       }
+      engine.reset()
     }
 
     audioEngine = nil
     inputNode = nil
 
     DispatchQueue.main.async {
-      try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+      let audioSession = AVAudioSession.sharedInstance()
+      let handsFreeActive = HandsFreeAudioManager.isInitialized && HandsFreeAudioManager.shared.isActive
+      
+      if !handsFreeActive {
+        try? audioSession.setActive(false, options: .notifyOthersOnDeactivation)
+      }
     }
   }
 
@@ -153,6 +160,13 @@ final class RealtimeAudioCapture {
       name: AVAudioSession.interruptionNotification,
       object: audioSession
     )
+    
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(handleAudioRouteChange),
+      name: AVAudioSession.routeChangeNotification,
+      object: audioSession
+    )
 
     let isPlayAndRecordConfigured = audioSession.category == .playAndRecord
 
@@ -164,13 +178,32 @@ final class RealtimeAudioCapture {
       ])
     }
 
-    try audioSession.setPreferredSampleRate(sampleRate)
+    // Lock to current sample rate - don't force 16kHz
+    let currentSampleRate = audioSession.sampleRate
+    if currentSampleRate > 0 {
+      try? audioSession.setPreferredSampleRate(currentSampleRate)
+    }
 
     let preferredBufferDuration = Double(bufferSize) / sampleRate
     try audioSession.setPreferredIOBufferDuration(preferredBufferDuration)
 
-    DispatchQueue.global(qos: .userInitiated).async {
-      try? audioSession.setActive(true, options: .notifyOthersOnDeactivation)
+    try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
+  }
+  
+  @objc private func handleAudioRouteChange(notification: Notification) {
+    guard let userInfo = notification.userInfo,
+          let reasonValue = userInfo[AVAudioSessionRouteChangeReasonKey] as? UInt,
+          let reason = AVAudioSession.RouteChangeReason(rawValue: reasonValue) else {
+      return
+    }
+    
+    switch reason {
+    case .newDeviceAvailable, .oldDeviceUnavailable:
+      if isCapturing {
+        forceRestart()
+      }
+    default:
+      break
     }
   }
 
@@ -186,11 +219,13 @@ final class RealtimeAudioCapture {
     }
 
     let inputFormat = inputNode.outputFormat(forBus: 0)
+    let actualSampleRate = inputFormat.sampleRate > 0 ? inputFormat.sampleRate : sampleRate
+    let actualChannels = inputFormat.channelCount > 0 ? min(inputFormat.channelCount, channels) : channels
     
     guard let tapFormat = AVAudioFormat(
       commonFormat: .pcmFormatFloat32,
-      sampleRate: inputFormat.sampleRate > 0 ? inputFormat.sampleRate : sampleRate,
-      channels: inputFormat.channelCount > 0 ? min(inputFormat.channelCount, channels) : channels,
+      sampleRate: actualSampleRate,
+      channels: actualChannels,
       interleaved: false
     ) else {
       throw AudioCaptureError.formatSetupFailed

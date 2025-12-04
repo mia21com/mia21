@@ -46,6 +46,7 @@ final class SimpleVADManager: NSObject {
   private var totalBuffersProcessed = 0
   private var speechBuffersDetected = 0
   private var chunksRecorded = 0
+  private var currentVADSampleRate: Double = 48000
 
   private override init() {
     super.init()
@@ -139,7 +140,10 @@ final class SimpleVADManager: NSObject {
     let isPlayAndRecordConfigured = audioSession.category == .playAndRecord
     
     if isPlayAndRecordConfigured {
-      try? configureDirectionalMicrophone(audioSession)
+      let currentInput = audioSession.currentRoute.inputs.first?.portType
+      if currentInput == .builtInMic {
+        try? configureDirectionalMicrophone(audioSession)
+      }
       return
     }
     
@@ -149,9 +153,13 @@ final class SimpleVADManager: NSObject {
         .defaultToSpeaker,
         .mixWithOthers
       ])
-      try audioSession.setPreferredSampleRate(16000.0)
       try audioSession.setPreferredIOBufferDuration(0.02)
-      try configureDirectionalMicrophone(audioSession)
+      
+      let currentInput = audioSession.currentRoute.inputs.first?.portType
+      if currentInput == .builtInMic {
+        try configureDirectionalMicrophone(audioSession)
+      }
+      
       try audioSession.setActive(true)
     } catch {
       do {
@@ -226,11 +234,36 @@ final class SimpleVADManager: NSObject {
 extension SimpleVADManager: RealtimeAudioCaptureDelegate {
   func didCaptureAudioBuffer(_ buffer: AVAudioPCMBuffer, timestamp: AVAudioTime) {
     guard isListening else { return }
+    
+    // Update VAD sample rate if audio format changed
+    let bufferSampleRate = buffer.format.sampleRate
+    if bufferSampleRate != currentVADSampleRate {
+      updateVADSampleRate(bufferSampleRate)
+    }
+    
     processSileroVAD(buffer: buffer)
   }
 
   func didFailWithError(_ error: Error) {
     delegate?.vadDidFailWithError(error)
+  }
+  
+  private func updateVADSampleRate(_ sampleRate: Double) {
+    guard let vad = vadManager else { return }
+    
+    let vadSampleRate: SL
+    if sampleRate <= 8000 {
+      vadSampleRate = .SAMPLERATE_8
+    } else if sampleRate <= 16000 {
+      vadSampleRate = .SAMPLERATE_16
+    } else if sampleRate <= 24000 {
+      vadSampleRate = .SAMPLERATE_24
+    } else {
+      vadSampleRate = .SAMPLERATE_48
+    }
+    
+    vad.setSamplerate(vadSampleRate)
+    currentVADSampleRate = sampleRate
   }
 }
 
