@@ -106,7 +106,6 @@ final class SideMenuViewModel: ObservableObject {
     Task {
       try? await Task.sleep(nanoseconds: 500_000_000) // 0.5s
       
-      let previousCount = conversations.count
       await loadConversations()
       
     }

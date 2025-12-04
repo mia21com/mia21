@@ -172,7 +172,7 @@ final class RealtimeAudioCapture {
 
     if !isPlayAndRecordConfigured {
       try audioSession.setCategory(.playAndRecord, mode: .default, options: [
-        .allowBluetooth,
+        .allowBluetoothHFP,
         .defaultToSpeaker,
         .mixWithOthers
       ])

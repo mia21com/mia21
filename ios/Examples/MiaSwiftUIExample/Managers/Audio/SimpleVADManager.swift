@@ -149,7 +149,7 @@ final class SimpleVADManager: NSObject {
     
     do {
       try audioSession.setCategory(.playAndRecord, mode: .default, options: [
-        .allowBluetooth,
+        .allowBluetoothHFP,
         .defaultToSpeaker,
         .mixWithOthers
       ])

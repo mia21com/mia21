@@ -76,7 +76,7 @@ final class AudioPlaybackManager: NSObject {
         let audioSession = AVAudioSession.sharedInstance()
         if audioSession.category != .playAndRecord {
           try? audioSession.setCategory(.playAndRecord, mode: .default, options: [
-            .allowBluetooth,
+            .allowBluetoothHFP,
             .defaultToSpeaker,
             .mixWithOthers
           ])
@@ -119,7 +119,7 @@ final class AudioPlaybackManager: NSObject {
           if handsFreeActive {
             if audioSession.category != .playAndRecord {
               try audioSession.setCategory(.playAndRecord, mode: .default, options: [
-                .allowBluetooth,
+                .allowBluetoothHFP,
                 .defaultToSpeaker,
                 .mixWithOthers
               ])
