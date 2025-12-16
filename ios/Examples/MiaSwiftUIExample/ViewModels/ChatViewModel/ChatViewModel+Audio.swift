@@ -137,11 +137,15 @@ extension ChatViewModel {
     var isFirstChunk = true
     var animationTask: Task<Void, Never>?
     var streamComplete = false
+    
+    let llmType: LLMType = .gemini
+    let collapseDoubleNewlines = false
 
     let options = ChatOptions(
       spaceId: currentSpaceId,
       botId: currentBotId,
-      conversationId: currentConversationId
+      conversationId: currentConversationId,
+      llmType: llmType
     )
 
     try await client.streamChat(messages: conversationHistory, options: options) { [weak self] chunk in
@@ -158,22 +162,25 @@ extension ChatViewModel {
         if animationTask == nil && typingIndicatorIndex < self.messages.count {
           animationTask = Task { @MainActor [weak self] in
             guard let self = self else { return }
-
+            
             while !Task.isCancelled {
               if displayedText.count < aiResponse.count {
                 let nextIndex = displayedText.endIndex
                 if nextIndex < aiResponse.endIndex {
                   let nextChar = String(aiResponse[nextIndex])
                   displayedText += nextChar
-
-                  self.updateMessage(at: typingIndicatorIndex, with: ChatMessage(
-                    text: displayedText,
-                    isUser: false,
-                    timestamp: Date(),
-                    isTypingIndicator: false,
-                    isStreaming: false
-                  ))
-
+                  
+                  if typingIndicatorIndex < self.messages.count {
+                    self.updateMessage(at: typingIndicatorIndex, with: ChatMessage(
+                      text: displayedText,
+                      isUser: false,
+                      timestamp: Date(),
+                      isTypingIndicator: false,
+                      isStreaming: true,
+                      collapseDoubleNewlines: collapseDoubleNewlines
+                    ))
+                  }
+                  
                   try? await Task.sleep(nanoseconds: UInt64(self.chunkDelay * 1_000_000_000))
                 } else {
                   try? await Task.sleep(nanoseconds: UInt64(self.chunkDelay * 1_000_000_000))
@@ -192,15 +199,33 @@ extension ChatViewModel {
 
     streamComplete = true
 
+    var finalText = aiResponse
+    if let regex = try? NSRegularExpression(pattern: "\\n{3,}", options: []) {
+      finalText = regex.stringByReplacingMatches(in: finalText, options: [], range: NSRange(location: 0, length: finalText.utf16.count), withTemplate: "\n\n")
+    }
+    if collapseDoubleNewlines {
+      if let regex = try? NSRegularExpression(pattern: "\\n{2}", options: []) {
+        finalText = regex.stringByReplacingMatches(in: finalText, options: [], range: NSRange(location: 0, length: finalText.utf16.count), withTemplate: "\n")
+      }
+    }
+    
     while displayedText.count < aiResponse.count {
       try? await Task.sleep(nanoseconds: 100_000_000)
     }
-
+    
     try? await Task.sleep(nanoseconds: 200_000_000)
     animationTask?.cancel()
 
     if typingIndicatorIndex < messages.count {
-      conversationHistory.append(Mia21.ChatMessage(role: .assistant, content: aiResponse))
+      self.updateMessage(at: typingIndicatorIndex, with: ChatMessage(
+        text: finalText,
+        isUser: false,
+        timestamp: Date(),
+        isTypingIndicator: false,
+        isStreaming: false,
+        collapseDoubleNewlines: collapseDoubleNewlines
+      ))
+      conversationHistory.append(Mia21.ChatMessage(role: .assistant, content: finalText))
     }
   }
 
@@ -210,7 +235,10 @@ extension ChatViewModel {
     var isFirstChunk = true
     var animationTask: Task<Void, Never>?
     var streamComplete = false
-
+    
+    let llmType: LLMType = .gemini
+    let collapseDoubleNewlines = false
+    
     let voiceConfig = VoiceConfig(
       enabled: true,
       voiceId: "21m00Tcm4TlvDq8ikWAM",
@@ -222,39 +250,45 @@ extension ChatViewModel {
     let options = ChatOptions(
       spaceId: currentSpaceId,
       botId: currentBotId,
-      conversationId: currentConversationId
+      conversationId: currentConversationId,
+      llmType: llmType
     )
 
     audioManager.onFirstAudioStart = { [weak self] in
       guard let self = self else { return }
-
-      self.updateMessage(at: typingIndicatorIndex, with: ChatMessage(
-        text: "",
-        isUser: false,
-        timestamp: Date(),
-        isTypingIndicator: false,
-        isStreaming: false
-      ))
-
+      
+      if typingIndicatorIndex < self.messages.count {
+        self.updateMessage(at: typingIndicatorIndex, with: ChatMessage(
+          text: "",
+          isUser: false,
+          timestamp: Date(),
+          isTypingIndicator: false,
+          isStreaming: false
+        ))
+      }
+      
       if animationTask == nil {
         animationTask = Task { @MainActor [weak self] in
           guard let self = self else { return }
-
+          
           while !Task.isCancelled {
             if displayedText.count < aiResponse.count {
               let nextIndex = displayedText.endIndex
               if nextIndex < aiResponse.endIndex {
                 let nextChar = String(aiResponse[nextIndex])
                 displayedText += nextChar
-
-                self.updateMessage(at: typingIndicatorIndex, with: ChatMessage(
-                  text: displayedText,
-                  isUser: false,
-                  timestamp: Date(),
-                  isTypingIndicator: false,
-                  isStreaming: false
-                ))
-
+                
+                if typingIndicatorIndex < self.messages.count {
+                  self.updateMessage(at: typingIndicatorIndex, with: ChatMessage(
+                    text: displayedText,
+                    isUser: false,
+                    timestamp: Date(),
+                    isTypingIndicator: false,
+                    isStreaming: true,
+                    collapseDoubleNewlines: collapseDoubleNewlines
+                  ))
+                }
+                
                 try? await Task.sleep(nanoseconds: UInt64(self.chunkDelay * 1_000_000_000))
               } else {
                 try? await Task.sleep(nanoseconds: UInt64(self.chunkDelay * 1_000_000_000))
@@ -292,16 +326,33 @@ extension ChatViewModel {
 
         case .done:
           streamComplete = true
-
+          var finalText = aiResponse
+          if let regex = try? NSRegularExpression(pattern: "\\n{3,}", options: []) {
+            finalText = regex.stringByReplacingMatches(in: finalText, options: [], range: NSRange(location: 0, length: finalText.utf16.count), withTemplate: "\n\n")
+          }
+          if collapseDoubleNewlines {
+            if let regex = try? NSRegularExpression(pattern: "\\n{2}", options: []) {
+              finalText = regex.stringByReplacingMatches(in: finalText, options: [], range: NSRange(location: 0, length: finalText.utf16.count), withTemplate: "\n")
+            }
+          }
+          
           while displayedText.count < aiResponse.count {
             try? await Task.sleep(nanoseconds: 100_000_000)
           }
-
+          
           try? await Task.sleep(nanoseconds: 200_000_000)
           animationTask?.cancel()
-
+          
           if typingIndicatorIndex < self.messages.count {
-            self.conversationHistory.append(Mia21.ChatMessage(role: .assistant, content: aiResponse))
+            self.updateMessage(at: typingIndicatorIndex, with: ChatMessage(
+              text: finalText,
+              isUser: false,
+              timestamp: Date(),
+              isTypingIndicator: false,
+              isStreaming: false,
+              collapseDoubleNewlines: collapseDoubleNewlines
+            ))
+            self.conversationHistory.append(Mia21.ChatMessage(role: .assistant, content: finalText))
           }
 
         case .error(let error):

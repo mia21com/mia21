@@ -293,11 +293,15 @@ final class ChatViewModel: ObservableObject {
     var isFirstChunk = true
     var animationTask: Task<Void, Never>?
     var streamComplete = false
+    
+    let llmType: LLMType = .openai
+    let collapseDoubleNewlines = false
 
     let options = ChatOptions(
       spaceId: currentSpaceId,
       botId: currentBotId,
-      conversationId: currentConversationId
+      conversationId: currentConversationId,
+      llmType: llmType
     )
 
     try await client.streamChat(messages: conversationHistory, options: options) { [weak self] chunk in
@@ -328,10 +332,10 @@ final class ChatViewModel: ObservableObject {
                       isUser: false,
                       timestamp: Date(),
                       isTypingIndicator: false,
-                      isStreaming: !streamComplete
+                      isStreaming: true,
+                      collapseDoubleNewlines: collapseDoubleNewlines
                     )
                     self.onMessagesUpdated?()
-                    // Don't call onScrollToBottom here - let updateMessages handle it
                   }
                   
                   try? await Task.sleep(nanoseconds: UInt64(self.chunkDelay * 1_000_000_000))
@@ -352,6 +356,16 @@ final class ChatViewModel: ObservableObject {
 
     streamComplete = true
     
+    var finalText = aiResponse
+    if let regex = try? NSRegularExpression(pattern: "\\n{3,}", options: []) {
+      finalText = regex.stringByReplacingMatches(in: finalText, options: [], range: NSRange(location: 0, length: finalText.utf16.count), withTemplate: "\n\n")
+    }
+    if collapseDoubleNewlines {
+      if let regex = try? NSRegularExpression(pattern: "\\n{2}", options: []) {
+        finalText = regex.stringByReplacingMatches(in: finalText, options: [], range: NSRange(location: 0, length: finalText.utf16.count), withTemplate: "\n")
+      }
+    }
+    
     while displayedText.count < aiResponse.count {
       try? await Task.sleep(nanoseconds: 100_000_000)
     }
@@ -360,7 +374,15 @@ final class ChatViewModel: ObservableObject {
     animationTask?.cancel()
 
     if typingIndicatorIndex < messages.count {
-      conversationHistory.append(Mia21.ChatMessage(role: .assistant, content: aiResponse))
+      messages[typingIndicatorIndex] = ChatMessage(
+        text: finalText,
+        isUser: false,
+        timestamp: Date(),
+        isTypingIndicator: false,
+        isStreaming: false,
+        collapseDoubleNewlines: collapseDoubleNewlines
+      )
+      conversationHistory.append(Mia21.ChatMessage(role: .assistant, content: finalText))
       onMessagesUpdated?()
     }
   }
@@ -371,6 +393,10 @@ final class ChatViewModel: ObservableObject {
     var isFirstChunk = true
     var animationTask: Task<Void, Never>?
     var streamComplete = false
+    
+    let llmType: LLMType = .openai
+    let collapseDoubleNewlines = false
+
     let voiceConfig = VoiceConfig(
       enabled: true,
       voiceId: "21m00Tcm4TlvDq8ikWAM",
@@ -382,7 +408,8 @@ final class ChatViewModel: ObservableObject {
     let options = ChatOptions(
       spaceId: currentSpaceId,
       botId: currentBotId,
-      conversationId: currentConversationId
+      conversationId: currentConversationId,
+      llmType: llmType
     )
 
     audioManager.onFirstAudioStart = { [weak self] in
@@ -416,10 +443,10 @@ final class ChatViewModel: ObservableObject {
                     isUser: false,
                     timestamp: Date(),
                     isTypingIndicator: false,
-                    isStreaming: !streamComplete
+                    isStreaming: true,
+                    collapseDoubleNewlines: collapseDoubleNewlines
                   )
                   self.onMessagesUpdated?()
-                  // Don't call onScrollToBottom here - let updateMessages handle it
                 }
                 
                 try? await Task.sleep(nanoseconds: UInt64(self.chunkDelay * 1_000_000_000))
@@ -460,6 +487,16 @@ final class ChatViewModel: ObservableObject {
         case .done:
           streamComplete = true
           
+          var finalText = aiResponse
+          if let regex = try? NSRegularExpression(pattern: "\\n{3,}", options: []) {
+            finalText = regex.stringByReplacingMatches(in: finalText, options: [], range: NSRange(location: 0, length: finalText.utf16.count), withTemplate: "\n\n")
+          }
+          if collapseDoubleNewlines {
+            if let regex = try? NSRegularExpression(pattern: "\\n{2}", options: []) {
+              finalText = regex.stringByReplacingMatches(in: finalText, options: [], range: NSRange(location: 0, length: finalText.utf16.count), withTemplate: "\n")
+            }
+          }
+          
           while displayedText.count < aiResponse.count {
             try? await Task.sleep(nanoseconds: 100_000_000)
           }
@@ -468,7 +505,15 @@ final class ChatViewModel: ObservableObject {
           animationTask?.cancel()
           
           if typingIndicatorIndex < self.messages.count {
-            self.conversationHistory.append(Mia21.ChatMessage(role: .assistant, content: aiResponse))
+            self.messages[typingIndicatorIndex] = ChatMessage(
+              text: finalText,
+              isUser: false,
+              timestamp: Date(),
+              isTypingIndicator: false,
+              isStreaming: false,
+              collapseDoubleNewlines: collapseDoubleNewlines
+            )
+            self.conversationHistory.append(Mia21.ChatMessage(role: .assistant, content: finalText))
             self.onMessagesUpdated?()
           }
 

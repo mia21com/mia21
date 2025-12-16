@@ -87,10 +87,7 @@ class ChatHistoryCell: UITableViewCell {
   }
 
   func configure(with conversation: ConversationSummary, spaces: [Space], bots: [Bot], isSelected: Bool = false) {
-    let spaceName = spaces.first(where: { $0.spaceId == conversation.spaceId })?.name
-    let botName = bots.first(where: { $0.botId == conversation.botId })?.name
-
-    titleLabel.text = conversation.displayTitle(spaceName: spaceName, botName: botName)
+    titleLabel.text = conversation.displayTitle
     setSelectedState(isSelected)
   }
 

@@ -20,6 +20,7 @@ struct ChatMessage {
   var isTypingIndicator: Bool = false
   var isStreaming: Bool = false
   var isProcessingAudio: Bool = false
+  var collapseDoubleNewlines: Bool = false
   
   func toStoredMessage() -> StoredChatMessage {
     return StoredChatMessage(

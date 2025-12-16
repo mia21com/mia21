@@ -27,22 +27,13 @@ public struct ConversationSummary: Codable, Identifiable {
   public let firstMessage: String?
   public let title: String?
   
-  /// Generate title from space and bot names with conversation title
-  /// - Parameters:
-  ///   - spaceName: Name of the space
-  ///   - botName: Name of the bot (optional)
-  /// - Returns: Formatted title like "Space · Bot: [title]"
-  public func displayTitle(spaceName: String?, botName: String?) -> String {
-    let spaceDisplay = spaceName ?? spaceId
-    let botDisplay = botName ?? (botId ?? "No Bot")
-    
-    // If backend provided a title, use format: "Space · Bot: [title]"
+  /// Get display title for the conversation
+  /// - Returns: The conversation title, or "New Chat" if no title
+  public var displayTitle: String {
     if let title = title, !title.isEmpty {
-      return "\(spaceDisplay) · \(botDisplay): \(title)"
+      return title
     }
-    
-    // Otherwise just show "Space · Bot"
-    return "\(spaceDisplay) · \(botDisplay)"
+    return "New Chat"
   }
   
   // Note: No custom CodingKeys needed - APIClient uses .convertFromSnakeCase

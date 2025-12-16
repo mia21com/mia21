@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		8413D0632EEAD18E00A61613 /* MarkdownKit in Frameworks */ = {isa = PBXBuildFile; productRef = 8413D0622EEAD18E00A61613 /* MarkdownKit */; };
 		846B50172ECFB8BE002D784C /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 846B4FF02ECFB8BE002D784C /* AppDelegate.swift */; };
 		846B50192ECFB8BE002D784C /* AudioPlaybackManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 846B4FF42ECFB8BE002D784C /* AudioPlaybackManager.swift */; };
 		846B501A2ECFB8BE002D784C /* HandsFreeAudioManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 846B4FF62ECFB8BE002D784C /* HandsFreeAudioManager.swift */; };
@@ -74,6 +75,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				BB0000010000000000000010 /* Mia21 in Frameworks */,
+				8413D0632EEAD18E00A61613 /* MarkdownKit in Frameworks */,
 				BB0000010000000000000022 /* RealTimeCutVADLibrary in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -310,6 +312,7 @@
 			packageProductDependencies = (
 				BB0000010000000000000011 /* Mia21 */,
 				BB0000010000000000000023 /* RealTimeCutVADLibrary */,
+				8413D0622EEAD18E00A61613 /* MarkdownKit */,
 			);
 			productName = MiaUIKitExample;
 			productReference = BB0000010000000000000012 /* MiaUIKitExample.app */;
@@ -342,6 +345,7 @@
 			packageReferences = (
 				BB000001000000000000001D /* XCLocalSwiftPackageReference "../.." */,
 				BB0000010000000000000024 /* XCRemoteSwiftPackageReference "RealTimeCutVADLibrary" */,
+				8413D0612EEAD18E00A61613 /* XCRemoteSwiftPackageReference "MarkdownKit" */,
 			);
 			productRefGroup = BB0000010000000000000016 /* Products */;
 			projectDirPath = "";
@@ -611,6 +615,14 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		8413D0612EEAD18E00A61613 /* XCRemoteSwiftPackageReference "MarkdownKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/bmoliveira/MarkdownKit.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.7.3;
+			};
+		};
 		BB0000010000000000000024 /* XCRemoteSwiftPackageReference "RealTimeCutVADLibrary" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/helloooideeeeea/RealTimeCutVADLibrary.git";
@@ -622,6 +634,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		8413D0622EEAD18E00A61613 /* MarkdownKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8413D0612EEAD18E00A61613 /* XCRemoteSwiftPackageReference "MarkdownKit" */;
+			productName = MarkdownKit;
+		};
 		BB0000010000000000000011 /* Mia21 */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = BB000001000000000000001D /* XCLocalSwiftPackageReference "../.." */;

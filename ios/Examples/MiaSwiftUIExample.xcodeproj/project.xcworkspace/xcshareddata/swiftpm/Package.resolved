@@ -1,6 +1,15 @@
 {
-  "originHash" : "c08c707c2a8763ddb919924ea51c43243e906d3eb90cb1d6b5e27797d207eb3e",
+  "originHash" : "7cb8e1e74e84c8b60948aadd4370db6aacbe4202af7bc71b9227377dbd6377cb",
   "pins" : [
+    {
+      "identity" : "markdownkit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/bmoliveira/MarkdownKit.git",
+      "state" : {
+        "revision" : "39ea7a3fc7e65bcafe55152592b834859be574a5",
+        "version" : "1.7.3"
+      }
+    },
     {
       "identity" : "realtimecutvadlibrary",
       "kind" : "remoteSourceControl",

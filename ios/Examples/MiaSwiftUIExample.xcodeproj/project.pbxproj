@@ -34,6 +34,7 @@
 		AA0000010000000000000026 /* ScrollOffsetPreferenceKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000010000000000000027 /* ScrollOffsetPreferenceKey.swift */; };
 		AA0000010000000000000028 /* ChatInputView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000010000000000000029 /* ChatInputView.swift */; };
 		AA0000010000000000000030 /* RealTimeCutVADLibrary in Frameworks */ = {isa = PBXBuildFile; productRef = AA0000010000000000000031 /* RealTimeCutVADLibrary */; };
+		AA0000010000000000000040 /* MarkdownKit in Frameworks */ = {isa = PBXBuildFile; productRef = AA0000010000000000000041 /* MarkdownKit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -72,6 +73,7 @@
 			files = (
 				AA0000010000000000000010 /* Mia21 in Frameworks */,
 				AA0000010000000000000030 /* RealTimeCutVADLibrary in Frameworks */,
+				AA0000010000000000000040 /* MarkdownKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -241,6 +243,7 @@
 			packageProductDependencies = (
 				AA0000010000000000000011 /* Mia21 */,
 				AA0000010000000000000031 /* RealTimeCutVADLibrary */,
+				AA0000010000000000000041 /* MarkdownKit */,
 			);
 			productName = MiaSwiftUIExample;
 			productReference = AA0000010000000000000012 /* MiaSwiftUIExample.app */;
@@ -273,6 +276,7 @@
 			packageReferences = (
 				AA000001000000000000001D /* XCLocalSwiftPackageReference "../.." */,
 				AA0000010000000000000032 /* XCRemoteSwiftPackageReference "RealTimeCutVADLibrary" */,
+				AA0000010000000000000042 /* XCRemoteSwiftPackageReference "MarkdownKit" */,
 			);
 			productRefGroup = AA0000010000000000000016 /* Products */;
 			projectDirPath = "";
@@ -547,6 +551,14 @@
 				minimumVersion = 1.0.0;
 			};
 		};
+		AA0000010000000000000042 /* XCRemoteSwiftPackageReference "MarkdownKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/bmoliveira/MarkdownKit.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.7.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -559,6 +571,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = AA0000010000000000000032 /* XCRemoteSwiftPackageReference "RealTimeCutVADLibrary" */;
 			productName = RealTimeCutVADLibrary;
+		};
+		AA0000010000000000000041 /* MarkdownKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AA0000010000000000000042 /* XCRemoteSwiftPackageReference "MarkdownKit" */;
+			productName = MarkdownKit;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

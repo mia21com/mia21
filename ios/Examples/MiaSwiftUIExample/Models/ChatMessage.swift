@@ -21,7 +21,8 @@ struct ChatMessage: Identifiable {
   var isTypingIndicator: Bool = false
   var isStreaming: Bool = false
   var isProcessingAudio: Bool = false
-  
+  var collapseDoubleNewlines: Bool = false
+
   // Convert to storable format for persistence
   func toStoredMessage() -> StoredChatMessage {
     return StoredChatMessage(

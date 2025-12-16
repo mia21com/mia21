@@ -149,10 +149,16 @@ final class StreamingService: StreamingServiceProtocol {
   /// Simplified: Accept only text/audio content, filter out all objects/structured data
   /// Returns the text content to display, or nil if it should be skipped
   static func extractTextContent(from content: String) -> String? {
+    // Skip truly empty content or [DONE] marker
+    // Note: We keep whitespace-only content (like " ") as it may be valid text between words
+    if content.isEmpty || content == "[DONE]" {
+      return nil
+    }
+    
     let trimmed = content.trimmingCharacters(in: .whitespaces)
     
-    // Skip empty content or [DONE] marker
-    if trimmed.isEmpty || trimmed == "[DONE]" {
+    // Skip [DONE] marker even with surrounding whitespace
+    if trimmed == "[DONE]" {
       return nil
     }
     
@@ -228,7 +234,7 @@ final class StreamingService: StreamingServiceProtocol {
     // Only trim to check if empty, but preserve original content with newlines
     let trimmedForCheck = line.trimmingCharacters(in: .whitespaces)
 
-    // Skip empty lines
+    // Skip completely empty lines (blank lines between SSE events)
     if trimmedForCheck.isEmpty {
       return
     }
@@ -236,6 +242,13 @@ final class StreamingService: StreamingServiceProtocol {
     // Check if line has "data: " prefix (SSE format)
     if line.hasPrefix("data: ") {
       let content = String(line.dropFirst(6)) // Remove "data: " prefix
+      
+      // Empty data line means a newline in the content
+      // (SSE sends "data: " with no content to represent line breaks)
+      if content.isEmpty {
+        onChunk("\n")
+        return
+      }
       
       // Use general text extraction - only show actual messages
       if let textContent = StreamingService.extractTextContent(from: content) {
@@ -259,26 +272,34 @@ private struct SSEParser {
   private var audioChunkCount = 0
 
   mutating func parse(line: String, onEvent: (StreamEvent) -> Void) {
-    let trimmed = line.trimmingCharacters(in: .whitespaces)
+    // Only trim to check if truly empty, preserve original for content extraction
+    let trimmedForCheck = line.trimmingCharacters(in: .whitespaces)
 
-    if trimmed.isEmpty {
+    if trimmedForCheck.isEmpty {
       return
     }
 
-    // Parse event type
-    if trimmed.hasPrefix("event: ") {
-      currentEvent = String(trimmed.dropFirst(7)).trimmingCharacters(in: .whitespaces)
+    // Parse event type - use original line to preserve spacing
+    if line.hasPrefix("event: ") {
+      currentEvent = String(line.dropFirst(7)).trimmingCharacters(in: .whitespaces)
       logDebug("Event type: \(currentEvent ?? "nil")")
       return
     }
 
-    // Parse data
-    if trimmed.hasPrefix("data: ") {
-      let dataString = String(trimmed.dropFirst(6))
+    // Parse data - use original line to preserve content with spaces
+    if line.hasPrefix("data: ") {
+      let dataString = String(line.dropFirst(6))
 
       // Check for [DONE] marker
       if dataString == "[DONE]" {
         logInfo("Stream completed. Text: \(chunkCount), Audio: \(audioChunkCount)")
+        return
+      }
+      
+      // Empty data line means a newline in the content
+      if dataString.isEmpty {
+        chunkCount += 1
+        onEvent(.text("\n"))
         return
       }
 

@@ -68,9 +68,7 @@ struct SideMenuView: View {
             viewModel.selectConversation(conversation.id)
             onSelectChat(conversation.id)
           } label: {
-            let spaceName = viewModel.spaces.first(where: { $0.spaceId == conversation.spaceId })?.name
-            let botName = viewModel.bots.first(where: { $0.botId == conversation.botId })?.name
-            Text(conversation.displayTitle(spaceName: spaceName, botName: botName))
+            Text(conversation.displayTitle)
               .font(.system(size: 14, weight: .regular))
               .foregroundColor(.primary)
               .lineLimit(1)
@@ -82,7 +80,7 @@ struct SideMenuView: View {
               : Color.clear
           )
           .listRowSeparator(.hidden)
-          .listRowInsets(EdgeInsets(top: 0, leading: 12, bottom: 0, trailing: 12))
+          .listRowInsets(EdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 12))
           .swipeActions(edge: .trailing, allowsFullSwipe: true) {
             Button(role: .destructive) {
               Task {

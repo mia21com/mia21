@@ -50,6 +50,7 @@ final class ChatMessageCell: UITableViewCell {
   private var typingIndicatorConstraints: [NSLayoutConstraint] = []
   private var previousText: String = ""
   private var currentTextColor: UIColor = .label
+  private var collapseDoubleNewlines: Bool = true
 
   // MARK: - Initialization
 
@@ -175,6 +176,7 @@ final class ChatMessageCell: UITableViewCell {
     bubbleView.backgroundColor = .secondarySystemBackground
     currentTextColor = .label
     cursorView.backgroundColor = .label
+    collapseDoubleNewlines = message.collapseDoubleNewlines
     applyBubbleAlignment(isUserMessage: false)
 
     updateAssistantMessageText(message)
@@ -182,12 +184,21 @@ final class ChatMessageCell: UITableViewCell {
   }
 
   private func updateAssistantMessageText(_ message: ChatMessage) {
-    messageLabel.attributedText = message.text.parseMarkdown(with: currentTextColor)
+    messageLabel.attributedText = message.text.parseMarkdown(
+      with: currentTextColor,
+      isStreaming: message.isStreaming,
+      collapseDoubleNewlines: message.collapseDoubleNewlines
+    )
     previousText = message.text
   }
 
   private func animateTextUpdate(_ text: String) {
-    messageLabel.attributedText = text.parseMarkdown(with: currentTextColor)
+    // animateTextUpdate is only called during streaming, so always pass true
+    messageLabel.attributedText = text.parseMarkdown(
+      with: currentTextColor,
+      isStreaming: true,
+      collapseDoubleNewlines: collapseDoubleNewlines
+    )
   }
 
   private func updateStreamingState(isStreaming: Bool) {
