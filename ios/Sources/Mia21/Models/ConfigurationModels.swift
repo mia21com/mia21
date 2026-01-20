@@ -49,6 +49,8 @@ public struct InitializeOptions {
   public var llmType: LLMType?
   public var userName: String?
   public var language: String?
+  /// IANA timezone identifier (e.g., "America/New_York", "Europe/London")
+  public var timezone: String?
   public var generateFirstMessage: Bool
   public var incognitoMode: Bool
   public var customerLlmKey: String?
@@ -60,6 +62,7 @@ public struct InitializeOptions {
     llmType: LLMType? = .openai,
     userName: String? = nil,
     language: String? = nil,
+    timezone: String? = nil,
     generateFirstMessage: Bool = true,
     incognitoMode: Bool = false,
     customerLlmKey: String? = nil,
@@ -70,6 +73,7 @@ public struct InitializeOptions {
     self.llmType = llmType
     self.userName = userName
     self.language = language
+    self.timezone = timezone
     self.generateFirstMessage = generateFirstMessage
     self.incognitoMode = incognitoMode
     self.customerLlmKey = customerLlmKey

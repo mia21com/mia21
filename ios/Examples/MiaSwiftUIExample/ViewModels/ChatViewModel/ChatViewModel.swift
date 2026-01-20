@@ -31,6 +31,10 @@ final class ChatViewModel: ObservableObject {
   @Published var currentError: AppError?
   @Published var isVoiceEnabled: Bool = false
   @Published var isHandsFreeModeEnabled: Bool = false
+  /// Voice ID for per-request voice override (ElevenLabs voice ID).
+  /// Priority: Request-level voiceId > Bot-level voice_id > Default
+  /// Set to a test voice ID to verify it's passed to the API (e.g., "EXAVITQu4vr4xnSDxMaL" for Bella)
+  var currentVoiceId: String? = "EXAVITQu4vr4xnSDxMaL"  // Test: Bella voice
   @Published var isHandsFreeListening: Bool = false
   @Published var isHandsFreeVoiceActive: Bool = false
   @Published var isRecording: Bool = false
@@ -108,6 +112,7 @@ final class ChatViewModel: ObservableObject {
         options: InitializeOptions(
           spaceId: currentSpaceId,
           botId: currentBotId,
+          timezone: TimeZone.current.identifier,  // Pass device timezone
           generateFirstMessage: true
         )
       )

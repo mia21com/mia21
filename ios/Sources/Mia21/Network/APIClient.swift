@@ -31,6 +31,7 @@ struct APIEndpoint {
     case get = "GET"
     case post = "POST"
     case put = "PUT"
+    case patch = "PATCH"
     case delete = "DELETE"
   }
 
@@ -143,7 +144,7 @@ final class APIClient: APIClientProtocol {
 
     // Add body if provided
     if let body = endpoint.body {
-      request.httpBody = try JSONSerialization.data(withJSONObject: body)
+      request.httpBody = try JSONSerialization.data(withJSONObject: body, options: [.withoutEscapingSlashes])
     }
 
     return request

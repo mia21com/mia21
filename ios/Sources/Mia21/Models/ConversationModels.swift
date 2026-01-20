@@ -77,3 +77,33 @@ public struct DeleteConversationResponse: Codable {
   
   // Note: No custom CodingKeys needed - APIClient uses .convertFromSnakeCase
 }
+
+// MARK: - Rename Response
+
+public struct RenameConversationResponse: Codable {
+  public let success: Bool
+  public let conversationId: String
+  public let title: String?
+  
+  // Note: No custom CodingKeys needed - APIClient uses .convertFromSnakeCase
+}
+
+// MARK: - Delete User Data Response (GDPR)
+
+/// Response from deleting all user data (GDPR compliance)
+/// ⚠️ This permanently deletes all conversations, messages, memories, and RAG/vector data
+public struct DeleteUserDataResponse: Codable {
+  public let success: Bool
+  public let userId: String
+  public let deleted: DeletedDataCounts
+  public let ragDeleted: Bool
+  
+  // Note: No custom CodingKeys needed - APIClient uses .convertFromSnakeCase
+}
+
+/// Counts of deleted data items
+public struct DeletedDataCounts: Codable {
+  public let conversations: Int
+  public let messages: Int
+  public let memories: Int
+}

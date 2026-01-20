@@ -14,6 +14,8 @@ package com.mia21.services
 import com.mia21.models.ConversationDetail
 import com.mia21.models.ConversationSummary
 import com.mia21.models.DeleteConversationResponse
+import com.mia21.models.DeleteUserDataResponse
+import com.mia21.models.RenameConversationResponse
 import com.mia21.network.APIClient
 import com.mia21.network.APIEndpoint
 import com.mia21.network.HTTPMethod
@@ -77,6 +79,42 @@ class ConversationService(private val apiClient: APIClient) {
         
         val jsonResponse = apiClient.performRequest(endpoint, String::class.java)
         return apiClient.json.decodeFromString<DeleteConversationResponse>(jsonResponse)
+    }
+    
+    /**
+     * Rename a conversation (update its title)
+     * @param conversationId The conversation ID to rename
+     * @param title New title for the conversation (empty string to clear)
+     * @return RenameConversationResponse with success status and new title
+     */
+    suspend fun renameConversation(conversationId: String, title: String): RenameConversationResponse {
+        val body = mapOf("title" to title)
+        
+        val endpoint = APIEndpoint(
+            path = "/conversations/$conversationId",
+            method = HTTPMethod.PATCH,
+            body = body
+        )
+        
+        val jsonResponse = apiClient.performRequest(endpoint, String::class.java)
+        return apiClient.json.decodeFromString<RenameConversationResponse>(jsonResponse)
+    }
+    
+    /**
+     * Delete ALL data for a specific end-user (GDPR compliance)
+     * ⚠️ This permanently deletes all conversations, messages, memories, and RAG/vector data.
+     * This action cannot be undone.
+     * @param userId The end-user ID whose data should be deleted
+     * @return DeleteUserDataResponse with counts of deleted items
+     */
+    suspend fun deleteUserData(userId: String): DeleteUserDataResponse {
+        val endpoint = APIEndpoint(
+            path = "/conversations/user/$userId",
+            method = HTTPMethod.DELETE
+        )
+        
+        val jsonResponse = apiClient.performRequest(endpoint, String::class.java)
+        return apiClient.json.decodeFromString<DeleteUserDataResponse>(jsonResponse)
     }
 }
 

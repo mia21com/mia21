@@ -53,6 +53,7 @@ class ChatService(private val apiClient: APIClient) : ChatServiceProtocol {
         
         options.userName?.let { body["user_name"] = it }
         options.language?.let { body["language"] = it }
+        options.timezone?.let { body["timezone"] = it }
         options.botId?.let { body["bot_id"] = it }
         (options.customerLlmKey ?: customerLlmKey)?.let { body["customer_llm_key"] = it }
         
@@ -93,6 +94,7 @@ class ChatService(private val apiClient: APIClient) : ChatServiceProtocol {
         options.maxTokens?.let { body["max_tokens"] = it }
         options.botId?.let { body["bot_id"] = it }
         options.conversationId?.let { body["conversation_id"] = it }
+        options.voiceId?.let { body["voice_id"] = it }
         (options.customerLlmKey ?: customerLlmKey)?.let { body["customer_llm_key"] = it }
         
         val endpoint = APIEndpoint(

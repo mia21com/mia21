@@ -18,6 +18,8 @@ protocol ConversationServiceProtocol {
   func listConversations(userId: String, spaceId: String?, limit: Int) async throws -> [ConversationSummary]
   func getConversation(conversationId: String) async throws -> ConversationDetail
   func deleteConversation(conversationId: String) async throws -> DeleteConversationResponse
+  func renameConversation(conversationId: String, title: String) async throws -> RenameConversationResponse
+  func deleteUserData(userId: String) async throws -> DeleteUserDataResponse
 }
 
 // MARK: - Conversation Service Implementation
@@ -114,6 +116,42 @@ final class ConversationService: ConversationServiceProtocol {
 
     logInfo("Successfully deleted conversation: \(conversationId)")
     logDebug("  Response: \(response.message)")
+    
+    return response
+  }
+  
+  func renameConversation(conversationId: String, title: String) async throws -> RenameConversationResponse {
+    logInfo("Renaming conversation: \(conversationId) to '\(title)'")
+
+    let body: [String: Any] = ["title": title]
+    
+    let endpoint = APIEndpoint(
+      path: "/conversations/\(conversationId)",
+      method: .patch,
+      body: body
+    )
+
+    let response: RenameConversationResponse = try await apiClient.performRequest(endpoint)
+
+    logInfo("Successfully renamed conversation: \(conversationId)")
+    logDebug("  New title: \(response.title ?? "cleared")")
+    
+    return response
+  }
+  
+  func deleteUserData(userId: String) async throws -> DeleteUserDataResponse {
+    logInfo("⚠️ Deleting ALL data for user: \(userId) (GDPR)")
+
+    let endpoint = APIEndpoint(
+      path: "/conversations/user/\(userId)",
+      method: .delete
+    )
+
+    let response: DeleteUserDataResponse = try await apiClient.performRequest(endpoint)
+
+    logInfo("Successfully deleted all user data for: \(userId)")
+    logDebug("  Deleted: \(response.deleted.conversations) conversations, \(response.deleted.messages) messages, \(response.deleted.memories) memories")
+    logDebug("  RAG deleted: \(response.ragDeleted)")
     
     return response
   }

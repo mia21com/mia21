@@ -35,6 +35,9 @@ public struct ChatOptions {
   public var customerLlmKey: String?
   public var spaceConfig: SpaceConfig?
   public var llmType: LLMType?
+  /// Voice ID for per-request voice override (ElevenLabs voice ID).
+  /// Priority: Request-level voiceId > Bot-level voice_id > Default
+  public var voiceId: String?
 
   public init(
     spaceId: String? = nil,
@@ -44,7 +47,8 @@ public struct ChatOptions {
     maxTokens: Int? = nil,
     customerLlmKey: String? = nil,
     spaceConfig: SpaceConfig? = nil,
-    llmType: LLMType? = nil
+    llmType: LLMType? = nil,
+    voiceId: String? = nil
   ) {
     self.spaceId = spaceId
     self.botId = botId
@@ -54,6 +58,7 @@ public struct ChatOptions {
     self.customerLlmKey = customerLlmKey
     self.spaceConfig = spaceConfig
     self.llmType = llmType
+    self.voiceId = voiceId
   }
 }
 

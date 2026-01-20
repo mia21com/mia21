@@ -55,6 +55,9 @@ final class ChatService: ChatServiceProtocol {
     if let language = options.language {
       body["language"] = language
     }
+    if let timezone = options.timezone {
+      body["timezone"] = timezone
+    }
     if let botId = options.botId {
       body["bot_id"] = botId
     }
@@ -107,6 +110,9 @@ final class ChatService: ChatServiceProtocol {
     }
     if let conversationId = options.conversationId {
       body["conversation_id"] = conversationId
+    }
+    if let voiceId = options.voiceId {
+      body["voice_id"] = voiceId
     }
 
     let llmKey = options.customerLlmKey ?? customerLlmKey

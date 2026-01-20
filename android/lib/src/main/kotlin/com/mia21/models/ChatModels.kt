@@ -35,7 +35,12 @@ data class ChatOptions(
     val maxTokens: Int? = null,
     val customerLlmKey: String? = null,
     val spaceConfig: SpaceConfig? = null,
-    val llmType: LLMType? = null
+    val llmType: LLMType? = null,
+    /**
+     * Voice ID for per-request voice override (ElevenLabs voice ID).
+     * Priority: Request-level voiceId > Bot-level voice_id > Default
+     */
+    val voiceId: String? = null
 )
 
 /**

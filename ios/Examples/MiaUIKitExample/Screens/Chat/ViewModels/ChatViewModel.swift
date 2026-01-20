@@ -23,6 +23,10 @@ final class ChatViewModel: ObservableObject {
   @Published private(set) var errorMessage: String?
   @Published var isVoiceEnabled: Bool = false
   @Published var isHandsFreeModeEnabled: Bool = false
+  /// Voice ID for per-request voice override (ElevenLabs voice ID).
+  /// Priority: Request-level voiceId > Bot-level voice_id > Default
+  /// Set to a test voice ID to verify it's passed to the API (e.g., "EXAVITQu4vr4xnSDxMaL" for Bella)
+  var currentVoiceId: String? = "EXAVITQu4vr4xnSDxMaL"  // Test: Bella voice
   @Published var isHandsFreeListening: Bool = false
   @Published var isHandsFreeVoiceActive: Bool = false
   @Published var isRecording: Bool = false
@@ -107,6 +111,7 @@ final class ChatViewModel: ObservableObject {
         options: InitializeOptions(
           spaceId: currentSpaceId,
           botId: currentBotId,
+          timezone: TimeZone.current.identifier,  // Pass device timezone
           generateFirstMessage: true
         )
       )
@@ -301,7 +306,8 @@ final class ChatViewModel: ObservableObject {
       spaceId: currentSpaceId,
       botId: currentBotId,
       conversationId: currentConversationId,
-      llmType: llmType
+      llmType: llmType,
+      voiceId: currentVoiceId  // Per-request voice override
     )
 
     try await client.streamChat(messages: conversationHistory, options: options) { [weak self] chunk in
@@ -397,9 +403,10 @@ final class ChatViewModel: ObservableObject {
     let llmType: LLMType = .openai
     let collapseDoubleNewlines = false
 
+    // Use currentVoiceId if set, otherwise fall back to default voice
     let voiceConfig = VoiceConfig(
       enabled: true,
-      voiceId: "21m00Tcm4TlvDq8ikWAM",
+      voiceId: currentVoiceId ?? "21m00Tcm4TlvDq8ikWAM",
       elevenlabsApiKey: nil,
       stability: 0.5,
       similarityBoost: 0.75
@@ -409,7 +416,8 @@ final class ChatViewModel: ObservableObject {
       spaceId: currentSpaceId,
       botId: currentBotId,
       conversationId: currentConversationId,
-      llmType: llmType
+      llmType: llmType,
+      voiceId: currentVoiceId  // Per-request voice override
     )
 
     audioManager.onFirstAudioStart = { [weak self] in

@@ -195,6 +195,9 @@ final class StreamingService: StreamingServiceProtocol {
     if let botId = options.botId {
       body["bot_id"] = botId
     }
+    if let voiceId = options.voiceId {
+      body["voice_id"] = voiceId
+    }
 
     let llmKey = options.customerLlmKey ?? customerLlmKey
     if let llmKey = llmKey {

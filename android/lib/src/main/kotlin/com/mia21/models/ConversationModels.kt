@@ -109,3 +109,38 @@ data class DeleteConversationResponse(
     val conversationId: String
 )
 
+/**
+ * Response from renaming a conversation
+ */
+@Serializable
+data class RenameConversationResponse(
+    val success: Boolean,
+    @SerialName("conversation_id")
+    val conversationId: String,
+    val title: String? = null
+)
+
+/**
+ * Response from deleting all user data (GDPR compliance)
+ * ⚠️ This permanently deletes all conversations, messages, memories, and RAG/vector data
+ */
+@Serializable
+data class DeleteUserDataResponse(
+    val success: Boolean,
+    @SerialName("user_id")
+    val userId: String,
+    val deleted: DeletedDataCounts,
+    @SerialName("rag_deleted")
+    val ragDeleted: Boolean
+)
+
+/**
+ * Counts of deleted data items
+ */
+@Serializable
+data class DeletedDataCounts(
+    val conversations: Int,
+    val messages: Int,
+    val memories: Int
+)
+

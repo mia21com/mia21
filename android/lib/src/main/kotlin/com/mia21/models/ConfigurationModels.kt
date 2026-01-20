@@ -51,6 +51,10 @@ data class InitializeOptions(
     val llmType: LLMType? = LLMType.OPENAI,
     val userName: String? = null,
     val language: String? = null,
+    /**
+     * IANA timezone identifier (e.g., "America/New_York", "Europe/London")
+     */
+    val timezone: String? = null,
     val generateFirstMessage: Boolean = true,
     val incognitoMode: Boolean = false,
     val customerLlmKey: String? = null,

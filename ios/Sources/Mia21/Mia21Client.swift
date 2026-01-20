@@ -250,6 +250,25 @@ public final class Mia21Client {
   public func deleteConversation(conversationId: String) async throws -> DeleteConversationResponse {
     return try await conversationService.deleteConversation(conversationId: conversationId)
   }
+  
+  /// Rename a conversation (update its title)
+  /// - Parameters:
+  ///   - conversationId: The conversation ID to rename
+  ///   - title: New title for the conversation (empty string to clear)
+  /// - Returns: RenameConversationResponse with success status and new title
+  /// - Throws: Mia21Error if the request fails or conversation not found
+  public func renameConversation(conversationId: String, title: String) async throws -> RenameConversationResponse {
+    return try await conversationService.renameConversation(conversationId: conversationId, title: title)
+  }
+  
+  /// Delete ALL data for a specific end-user (GDPR compliance)
+  /// - Parameter userId: The end-user ID whose data should be deleted
+  /// - Returns: DeleteUserDataResponse with counts of deleted items
+  /// - Throws: Mia21Error if the request fails
+  /// - Warning: ⚠️ This permanently deletes all conversations, messages, memories, and RAG/vector data. This action cannot be undone.
+  public func deleteUserData(userId: String) async throws -> DeleteUserDataResponse {
+    return try await conversationService.deleteUserData(userId: userId)
+  }
 
   // MARK: - Speech-to-Text
 

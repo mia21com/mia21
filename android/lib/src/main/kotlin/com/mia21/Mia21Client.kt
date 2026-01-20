@@ -233,6 +233,28 @@ class Mia21Client(
         return conversationService.deleteConversation(conversationId = conversationId)
     }
     
+    /**
+     * Rename a conversation (update its title)
+     * @param conversationId The conversation ID to rename
+     * @param title New title for the conversation (empty string to clear)
+     * @return RenameConversationResponse with success status and new title
+     * @throws Mia21Exception if the request fails or conversation not found
+     */
+    suspend fun renameConversation(conversationId: String, title: String): RenameConversationResponse {
+        return conversationService.renameConversation(conversationId = conversationId, title = title)
+    }
+    
+    /**
+     * Delete ALL data for a specific end-user (GDPR compliance)
+     * ⚠️ This permanently deletes all conversations, messages, memories, and RAG/vector data.
+     * This action cannot be undone.
+     * @param userId The end-user ID whose data should be deleted
+     * @return DeleteUserDataResponse with counts of deleted items
+     * @throws Mia21Exception if the request fails
+     */
+    suspend fun deleteUserData(userId: String): DeleteUserDataResponse {
+        return conversationService.deleteUserData(userId = userId)
+    }
 
     /**
      * Transcribe audio data to text

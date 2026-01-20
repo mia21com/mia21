@@ -40,7 +40,7 @@ import java.util.concurrent.TimeUnit
  * HTTP method types
  */
 enum class HTTPMethod {
-    GET, POST, PUT, DELETE
+    GET, POST, PUT, PATCH, DELETE
 }
 
 /**

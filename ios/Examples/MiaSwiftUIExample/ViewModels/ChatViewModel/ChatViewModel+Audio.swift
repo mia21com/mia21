@@ -145,7 +145,8 @@ extension ChatViewModel {
       spaceId: currentSpaceId,
       botId: currentBotId,
       conversationId: currentConversationId,
-      llmType: llmType
+      llmType: llmType,
+      voiceId: currentVoiceId  // Per-request voice override
     )
 
     try await client.streamChat(messages: conversationHistory, options: options) { [weak self] chunk in
@@ -239,9 +240,10 @@ extension ChatViewModel {
     let llmType: LLMType = .gemini
     let collapseDoubleNewlines = false
     
+    // Use currentVoiceId if set, otherwise fall back to default voice
     let voiceConfig = VoiceConfig(
       enabled: true,
-      voiceId: "21m00Tcm4TlvDq8ikWAM",
+      voiceId: currentVoiceId ?? "21m00Tcm4TlvDq8ikWAM",
       elevenlabsApiKey: nil,
       stability: 0.5,
       similarityBoost: 0.75
@@ -251,7 +253,8 @@ extension ChatViewModel {
       spaceId: currentSpaceId,
       botId: currentBotId,
       conversationId: currentConversationId,
-      llmType: llmType
+      llmType: llmType,
+      voiceId: currentVoiceId  // Per-request voice override
     )
 
     audioManager.onFirstAudioStart = { [weak self] in
