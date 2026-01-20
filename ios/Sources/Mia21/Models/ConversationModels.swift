@@ -25,7 +25,8 @@ public struct ConversationSummary: Codable, Identifiable {
   public let closedAt: String?
   public let messageCount: Int
   public let firstMessage: String?
-  public let title: String?
+  public var title: String?
+  public let timezone: String?
   
   /// Get display title for the conversation
   /// - Returns: The conversation title, or "New Chat" if no title
@@ -50,6 +51,7 @@ public struct ConversationDetail: Codable {
   public let createdAt: String
   public let updatedAt: String
   public let closedAt: String?
+  public let timezone: String?
   public let messages: [ConversationMessage]
   
   // Note: No custom CodingKeys needed - APIClient uses .convertFromSnakeCase

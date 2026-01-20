@@ -38,7 +38,8 @@ data class ConversationSummary(
     val messageCount: Int,
     @SerialName("first_message")
     val firstMessage: String? = null,
-    val title: String? = null
+    val title: String? = null,
+    val timezone: String? = null
 ) {
     /**
      * Generate a display title from space and bot names with conversation title
@@ -79,6 +80,7 @@ data class ConversationDetail(
     val updatedAt: String,
     @SerialName("closed_at")
     val closedAt: String? = null,
+    val timezone: String? = null,
     val messages: List<ConversationMessage>
 )
 
