@@ -82,10 +82,17 @@ class ChatService(private val apiClient: APIClient) : ChatServiceProtocol {
             throw Mia21Exception.ChatNotInitializedException()
         }
         
+        // Build messages array, optionally prepending system prompt
+        val messagesList = mutableListOf<Map<String, String>>()
+        options.systemPrompt?.let { prompt ->
+            messagesList.add(mapOf("role" to "system", "content" to prompt))
+        }
+        messagesList.add(mapOf("role" to "user", "content" to message))
+
         val body = mutableMapOf<String, Any?>(
             "user_id" to userId,
             "space_id" to (options.spaceId ?: currentSpace ?: "default_space"),
-            "messages" to listOf(mapOf("role" to "user", "content" to message)),
+            "messages" to messagesList,
             "llm_type" to (options.llmType ?: LLMType.OPENAI).value,
             "stream" to false
         )

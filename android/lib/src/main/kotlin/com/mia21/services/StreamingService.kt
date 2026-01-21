@@ -78,10 +78,17 @@ class StreamingService(private val apiClient: APIClient) {
             return@callbackFlow
         }
         
+        // Build messages array, optionally prepending system prompt
+        val messagesList = mutableListOf<Map<String, String>>()
+        options.systemPrompt?.let { prompt ->
+            messagesList.add(mapOf("role" to "system", "content" to prompt))
+        }
+        messagesList.addAll(messages.map { mapOf("role" to it.role.name.lowercase(), "content" to it.content) })
+        
         val body = mutableMapOf<String, Any?>(
             "user_id" to userId,
             "space_id" to (options.spaceId ?: currentSpace ?: "default_space"),
-            "messages" to messages.map { mapOf("role" to it.role.name.lowercase(), "content" to it.content) },
+            "messages" to messagesList,
             "llm_type" to (options.llmType ?: LLMType.OPENAI).value
         )
         

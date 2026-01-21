@@ -91,10 +91,17 @@ final class ChatService: ChatServiceProtocol {
       throw Mia21Error.chatNotInitialized
     }
 
+    // Build messages array, optionally prepending system prompt
+    var messagesArray: [[String: String]] = []
+    if let systemPrompt = options.systemPrompt {
+      messagesArray.append(["role": "system", "content": systemPrompt])
+    }
+    messagesArray.append(["role": MessageRole.user.rawValue, "content": message])
+
     var body: [String: Any] = [
       "user_id": userId,
       "space_id": options.spaceId ?? currentSpace ?? "default_space",
-      "messages": [["role": MessageRole.user.rawValue, "content": message]],
+      "messages": messagesArray,
       "llm_type": (options.llmType ?? .openai).rawValue,
       "stream": false
     ]
