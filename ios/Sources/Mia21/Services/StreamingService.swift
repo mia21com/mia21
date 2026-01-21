@@ -70,12 +70,7 @@ final class StreamingService: StreamingServiceProtocol {
       throw Mia21Error.chatNotInitialized
     }
 
-    // Build messages array, optionally prepending system prompt
-    var messagesDictArray: [[String: String]] = []
-    if let systemPrompt = options.systemPrompt {
-      messagesDictArray.append(["role": "system", "content": systemPrompt])
-    }
-    messagesDictArray.append(contentsOf: messages.map { ["role": $0.role.rawValue, "content": $0.content] })
+    let messagesDictArray = messages.map { ["role": $0.role.rawValue, "content": $0.content] }
 
     var body: [String: Any] = [
       "user_id": userId,
@@ -114,12 +109,7 @@ final class StreamingService: StreamingServiceProtocol {
       throw Mia21Error.chatNotInitialized
     }
 
-    // Build messages array, optionally prepending system prompt
-    var messagesDictArray: [[String: String]] = []
-    if let systemPrompt = options.systemPrompt {
-      messagesDictArray.append(["role": "system", "content": systemPrompt])
-    }
-    messagesDictArray.append(contentsOf: messages.map { ["role": $0.role.rawValue, "content": $0.content] })
+    let messagesDictArray = messages.map { ["role": $0.role.rawValue, "content": $0.content] }
 
     var body: [String: Any] = [
       "user_id": userId,

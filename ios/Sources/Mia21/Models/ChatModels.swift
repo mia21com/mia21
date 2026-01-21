@@ -38,9 +38,6 @@ public struct ChatOptions {
   /// Voice ID for per-request voice override (ElevenLabs voice ID).
   /// Priority: Request-level voiceId > Bot-level voice_id > Default
   public var voiceId: String?
-  /// Dynamic system prompt - configure AI behavior at runtime.
-  /// When provided, this will be prepended as a system message to the conversation.
-  public var systemPrompt: String?
 
   public init(
     spaceId: String? = nil,
@@ -51,8 +48,7 @@ public struct ChatOptions {
     customerLlmKey: String? = nil,
     spaceConfig: SpaceConfig? = nil,
     llmType: LLMType? = nil,
-    voiceId: String? = nil,
-    systemPrompt: String? = nil
+    voiceId: String? = nil
   ) {
     self.spaceId = spaceId
     self.botId = botId
@@ -63,7 +59,6 @@ public struct ChatOptions {
     self.spaceConfig = spaceConfig
     self.llmType = llmType
     self.voiceId = voiceId
-    self.systemPrompt = systemPrompt
   }
 }
 

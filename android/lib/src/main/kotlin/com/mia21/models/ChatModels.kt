@@ -40,12 +40,7 @@ data class ChatOptions(
      * Voice ID for per-request voice override (ElevenLabs voice ID).
      * Priority: Request-level voiceId > Bot-level voice_id > Default
      */
-    val voiceId: String? = null,
-    /**
-     * Dynamic system prompt - configure AI behavior at runtime.
-     * When provided, this will be prepended as a system message to the conversation.
-     */
-    val systemPrompt: String? = null
+    val voiceId: String? = null
 )
 
 /**
