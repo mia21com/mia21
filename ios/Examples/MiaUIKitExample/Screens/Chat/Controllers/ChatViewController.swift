@@ -473,7 +473,8 @@ private extension ChatViewController {
 
   func sendMessage(text: String) async {
     guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
-    guard viewModel.isChatInitialized else { return }
+    // Dynamic prompting doesn't need initialization - it's stateless
+    guard viewModel.isChatInitialized || viewModel.isDynamicPromptingEnabled else { return }
 
     chatInputView.clearText()
     chatInputView.isLoading = true
