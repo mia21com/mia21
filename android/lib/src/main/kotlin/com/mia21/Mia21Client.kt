@@ -152,6 +152,46 @@ class Mia21Client(
     suspend fun close(spaceId: String? = null) {
         chatService.close(userId = userId, spaceId = spaceId)
     }
+    
+    // OpenAI-Compatible Completions
+    
+    /**
+     * Send a completion request using the OpenAI-compatible endpoint.
+     * No bot/space pre-configuration required - include system message in the messages list.
+     * @param messages List of messages including system prompt (role = MessageRole.SYSTEM)
+     * @param options Completion configuration (model, temperature, etc.)
+     * @return CompletionResponse containing the AI's response in OpenAI format
+     * @throws Mia21Exception if the request fails
+     */
+    suspend fun complete(
+        messages: List<ChatMessage>,
+        options: CompletionOptions = CompletionOptions()
+    ): CompletionResponse {
+        return chatService.complete(
+            userId = userId,
+            messages = messages,
+            options = options
+        )
+    }
+    
+    /**
+     * Stream a completion using the OpenAI-compatible endpoint.
+     * No bot/space pre-configuration required - include system message in the messages list.
+     * @param messages List of messages including system prompt (role = MessageRole.SYSTEM)
+     * @param options Completion configuration (model, temperature, etc.)
+     * @return Flow of text chunks
+     * @throws Mia21Exception if the request fails
+     */
+    fun streamComplete(
+        messages: List<ChatMessage>,
+        options: CompletionOptions = CompletionOptions()
+    ): Flow<String> {
+        return streamingService.streamComplete(
+            userId = userId,
+            messages = messages,
+            options = options
+        )
+    }
 
 
     /**

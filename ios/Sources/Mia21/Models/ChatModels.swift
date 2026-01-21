@@ -83,3 +83,68 @@ public struct ToolCall: Codable {
   public let name: String?
   public let arguments: String?
 }
+
+// MARK: - OpenAI-Compatible Completion Options
+
+/// Options for OpenAI-compatible `/v1/chat/completions` endpoint.
+/// No bot/space pre-configuration required - just pass messages with system prompt.
+public struct CompletionOptions {
+  /// Space ID for context separation (passed via X-Space-Id header)
+  public var spaceId: String?
+  /// Bot ID for specific bot behavior (passed via X-Bot-Id header)
+  public var botId: String?
+  /// Model to use (e.g., "gpt-4o", "gpt-4o-mini")
+  public var model: String
+  /// Temperature for response randomness (0.0 - 2.0)
+  public var temperature: Double?
+  /// Maximum tokens in response
+  public var maxTokens: Int?
+  /// Whether to stream the response
+  public var stream: Bool
+  
+  public init(
+    spaceId: String? = nil,
+    botId: String? = nil,
+    model: String = "gpt-4o",
+    temperature: Double? = nil,
+    maxTokens: Int? = nil,
+    stream: Bool = false
+  ) {
+    self.spaceId = spaceId
+    self.botId = botId
+    self.model = model
+    self.temperature = temperature
+    self.maxTokens = maxTokens
+    self.stream = stream
+  }
+}
+
+// MARK: - OpenAI-Compatible Completion Response
+
+/// Response from OpenAI-compatible `/v1/chat/completions` endpoint
+public struct CompletionResponse: Codable {
+  public let id: String?
+  public let object: String?
+  public let created: Int?
+  public let model: String?
+  public let choices: [CompletionChoice]?
+  public let usage: CompletionUsage?
+}
+
+public struct CompletionChoice: Codable {
+  public let index: Int?
+  public let message: CompletionMessage?
+  public let delta: CompletionMessage?
+  public let finishReason: String?
+}
+
+public struct CompletionMessage: Codable {
+  public let role: String?
+  public let content: String?
+}
+
+public struct CompletionUsage: Codable {
+  public let promptTokens: Int?
+  public let completionTokens: Int?
+  public let totalTokens: Int?
+}

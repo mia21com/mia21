@@ -69,3 +69,60 @@ data class ToolCall(
     val arguments: String? = null
 )
 
+/**
+ * Options for OpenAI-compatible /v1/chat/completions endpoint.
+ * No bot/space pre-configuration required - just pass messages with system prompt.
+ */
+data class CompletionOptions(
+    /** Space ID for context separation (passed via X-Space-Id header) */
+    val spaceId: String? = null,
+    /** Bot ID for specific bot behavior (passed via X-Bot-Id header) */
+    val botId: String? = null,
+    /** Model to use (e.g., "gpt-4o", "gpt-4o-mini") */
+    val model: String = "gpt-4o",
+    /** Temperature for response randomness (0.0 - 2.0) */
+    val temperature: Double? = null,
+    /** Maximum tokens in response */
+    val maxTokens: Int? = null,
+    /** Whether to stream the response */
+    val stream: Boolean = false
+)
+
+/**
+ * Response from OpenAI-compatible /v1/chat/completions endpoint
+ */
+@Serializable
+data class CompletionResponse(
+    val id: String? = null,
+    val `object`: String? = null,
+    val created: Int? = null,
+    val model: String? = null,
+    val choices: List<CompletionChoice>? = null,
+    val usage: CompletionUsage? = null
+)
+
+@Serializable
+data class CompletionChoice(
+    val index: Int? = null,
+    val message: CompletionMessage? = null,
+    val delta: CompletionMessage? = null,
+    @SerialName("finish_reason")
+    val finishReason: String? = null
+)
+
+@Serializable
+data class CompletionMessage(
+    val role: String? = null,
+    val content: String? = null
+)
+
+@Serializable
+data class CompletionUsage(
+    @SerialName("prompt_tokens")
+    val promptTokens: Int? = null,
+    @SerialName("completion_tokens")
+    val completionTokens: Int? = null,
+    @SerialName("total_tokens")
+    val totalTokens: Int? = null
+)
+

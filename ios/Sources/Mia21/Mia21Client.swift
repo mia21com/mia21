@@ -171,6 +171,46 @@ public final class Mia21Client {
   public func close(spaceId: String? = nil) async throws {
     try await chatService.close(userId: userId, spaceId: spaceId)
   }
+  
+  // MARK: - OpenAI-Compatible Completions
+  
+  /// Send a completion request using the OpenAI-compatible endpoint.
+  /// No bot/space pre-configuration required - include system message in the messages array.
+  /// - Parameters:
+  ///   - messages: Array of messages including system prompt (role: .system)
+  ///   - options: Completion configuration (model, temperature, etc.)
+  /// - Returns: CompletionResponse containing the AI's response in OpenAI format
+  /// - Throws: Mia21Error if the request fails
+  public func complete(
+    messages: [ChatMessage],
+    options: CompletionOptions = CompletionOptions()
+  ) async throws -> CompletionResponse {
+    return try await chatService.complete(
+      userId: userId,
+      messages: messages,
+      options: options
+    )
+  }
+  
+  /// Stream a completion using the OpenAI-compatible endpoint.
+  /// No bot/space pre-configuration required - include system message in the messages array.
+  /// - Parameters:
+  ///   - messages: Array of messages including system prompt (role: .system)
+  ///   - options: Completion configuration (model, temperature, etc.)
+  ///   - onChunk: Callback invoked for each text chunk received
+  /// - Throws: Mia21Error if the request fails
+  public func streamComplete(
+    messages: [ChatMessage],
+    options: CompletionOptions = CompletionOptions(),
+    onChunk: @escaping (String) -> Void
+  ) async throws {
+    try await streamingService.streamComplete(
+      userId: userId,
+      messages: messages,
+      options: options,
+      onChunk: onChunk
+    )
+  }
 
   // MARK: - Streaming Operations
 

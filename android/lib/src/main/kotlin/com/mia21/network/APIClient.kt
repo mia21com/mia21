@@ -217,7 +217,12 @@ class APIClient(
      * Build HTTP request from endpoint definition
      */
     private fun buildRequest(endpoint: APIEndpoint): Request {
-        val fullURL = "$baseURL/api/v1${endpoint.path}"
+        // Paths starting with /v1/ are OpenAI-compatible and don't need /api prefix
+        val fullURL = if (endpoint.path.startsWith("/v1/")) {
+            "$baseURL${endpoint.path}"
+        } else {
+            "$baseURL/api/v1${endpoint.path}"
+        }
         
         val requestBuilder = Request.Builder().url(fullURL)
         

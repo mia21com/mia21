@@ -25,6 +25,7 @@ interface ChatServiceProtocol {
     val currentSpace: String?
     suspend fun initialize(userId: String, options: InitializeOptions, customerLlmKey: String?): InitializeResponse
     suspend fun sendMessage(userId: String, message: String, options: ChatOptions, customerLlmKey: String?, currentSpace: String?): ChatResponse
+    suspend fun complete(userId: String, messages: List<ChatMessage>, options: CompletionOptions): CompletionResponse
     suspend fun close(userId: String, spaceId: String?)
 }
 
@@ -129,6 +130,47 @@ class ChatService(private val apiClient: APIClient) : ChatServiceProtocol {
         apiClient.performRequest(endpoint, String::class.java)
         currentSpace = null
         Logger.debug("Chat session closed")
+    }
+    
+    /**
+     * Send a completion request using the OpenAI-compatible endpoint.
+     * No bot/space pre-configuration required - include system message in the messages list.
+     */
+    override suspend fun complete(
+        userId: String,
+        messages: List<ChatMessage>,
+        options: CompletionOptions
+    ): CompletionResponse {
+        Logger.debug("Sending completion request with ${messages.size} messages")
+        
+        // Build OpenAI-compatible messages array
+        val messagesList = messages.map { msg ->
+            mapOf("role" to msg.role.name.lowercase(), "content" to msg.content)
+        }
+        
+        val body = mutableMapOf<String, Any?>(
+            "model" to options.model,
+            "messages" to messagesList,
+            "stream" to false
+        )
+        
+        options.temperature?.let { body["temperature"] = it }
+        options.maxTokens?.let { body["max_tokens"] = it }
+        
+        // Build headers for OpenAI-compatible endpoint
+        val headers = mutableMapOf("X-User-Id" to userId)
+        options.spaceId?.let { headers["X-Space-Id"] = it }
+        options.botId?.let { headers["X-Bot-Id"] = it }
+        
+        val endpoint = APIEndpoint(
+            path = "/v1/chat/completions",
+            method = HTTPMethod.POST,
+            body = body,
+            headers = headers
+        )
+        
+        val jsonResponse = apiClient.performRequest(endpoint, String::class.java)
+        return apiClient.json.decodeFromString<CompletionResponse>(jsonResponse)
     }
 }
 

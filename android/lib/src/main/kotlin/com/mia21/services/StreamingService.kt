@@ -161,6 +161,88 @@ class StreamingService(private val apiClient: APIClient) {
     }
     
     /**
+     * Stream completion using the OpenAI-compatible endpoint.
+     * No bot/space pre-configuration required - include system message in the messages list.
+     */
+    fun streamComplete(
+        userId: String,
+        messages: List<ChatMessage>,
+        options: CompletionOptions
+    ): Flow<String> = callbackFlow {
+        Logger.debug("Starting streaming completion with ${messages.size} messages")
+        
+        // Build OpenAI-compatible messages array
+        val messagesList = messages.map { msg ->
+            mapOf("role" to msg.role.name.lowercase(), "content" to msg.content)
+        }
+        
+        val body = mutableMapOf<String, Any?>(
+            "model" to options.model,
+            "messages" to messagesList,
+            "stream" to true
+        )
+        
+        options.temperature?.let { body["temperature"] = it }
+        options.maxTokens?.let { body["max_tokens"] = it }
+        
+        // Build headers for OpenAI-compatible endpoint
+        val headers = mutableMapOf("X-User-Id" to userId)
+        options.spaceId?.let { headers["X-Space-Id"] = it }
+        options.botId?.let { headers["X-Bot-Id"] = it }
+        
+        val endpoint = APIEndpoint(
+            path = "/v1/chat/completions",
+            method = HTTPMethod.POST,
+            body = body,
+            headers = headers
+        )
+        
+        val job = launch {
+            try {
+                apiClient.performStreamRequest(endpoint).collect { data ->
+                    processOpenAIStreamData(data) { content ->
+                        trySend(content)
+                    }
+                }
+            } catch (e: Exception) {
+                Logger.error("Streaming completion failed: ${e.message}")
+                close(e)
+            }
+        }
+        
+        awaitClose {
+            job.cancel()
+        }
+    }
+    
+    /**
+     * Process OpenAI-style streaming data
+     */
+    private fun processOpenAIStreamData(data: String, onChunk: (String) -> Unit) {
+        val trimmed = data.trim()
+        
+        if (trimmed.isEmpty() || trimmed == "[DONE]") {
+            return
+        }
+        
+        try {
+            val json = JSONObject(trimmed)
+            val choices = json.optJSONArray("choices") ?: return
+            if (choices.length() == 0) return
+            
+            val firstChoice = choices.getJSONObject(0)
+            val delta = firstChoice.optJSONObject("delta") ?: return
+            val content = delta.optString("content", "")
+            
+            if (content.isNotEmpty()) {
+                onChunk(content)
+            }
+        } catch (e: Exception) {
+            // Not valid OpenAI format, skip
+        }
+    }
+    
+    /**
      * Build voice configuration dictionary for API request
      */
     private fun buildVoiceConfig(config: VoiceConfig): Map<String, Any?> {

@@ -18,6 +18,7 @@ protocol ChatServiceProtocol {
   var currentSpace: String? { get }
   func initialize(userId: String, options: InitializeOptions, customerLlmKey: String?) async throws -> InitializeResponse
   func sendMessage(userId: String, message: String, options: ChatOptions, customerLlmKey: String?, currentSpace: String?) async throws -> ChatResponse
+  func complete(userId: String, messages: [ChatMessage], options: CompletionOptions) async throws -> CompletionResponse
   func close(userId: String, spaceId: String?) async throws
 }
 
@@ -152,5 +153,43 @@ final class ChatService: ChatServiceProtocol {
     if spaceId == nil || spaceId == currentSpace {
       currentSpace = nil
     }
+  }
+  
+  // MARK: - OpenAI-Compatible Completions
+  
+  func complete(userId: String, messages: [ChatMessage], options: CompletionOptions) async throws -> CompletionResponse {
+    logInfo("Sending completion request with \(messages.count) messages")
+    
+    // Build OpenAI-compatible messages array
+    let messagesArray = messages.map { msg -> [String: String] in
+      return ["role": msg.role.rawValue, "content": msg.content]
+    }
+    
+    var body: [String: Any] = [
+      "model": options.model,
+      "messages": messagesArray,
+      "stream": false
+    ]
+    
+    if let temperature = options.temperature {
+      body["temperature"] = temperature
+    }
+    if let maxTokens = options.maxTokens {
+      body["max_tokens"] = maxTokens
+    }
+    
+    // Build headers for OpenAI-compatible endpoint
+    var headers: [String: String] = [
+      "X-User-Id": userId
+    ]
+    if let spaceId = options.spaceId {
+      headers["X-Space-Id"] = spaceId
+    }
+    if let botId = options.botId {
+      headers["X-Bot-Id"] = botId
+    }
+    
+    let endpoint = APIEndpoint(path: "/v1/chat/completions", method: .post, body: body, headers: headers)
+    return try await apiClient.performRequest(endpoint)
   }
 }

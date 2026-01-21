@@ -33,6 +33,13 @@ protocol StreamingServiceProtocol {
     currentSpace: String?,
     onEvent: @escaping (StreamEvent) -> Void
   ) async throws
+  
+  func streamComplete(
+    userId: String,
+    messages: [ChatMessage],
+    options: CompletionOptions,
+    onChunk: @escaping (String) -> Void
+  ) async throws
 }
 
 // MARK: - Streaming Service Implementation
@@ -150,6 +157,55 @@ final class StreamingService: StreamingServiceProtocol {
 
     // Send final done event
     onEvent(.done(nil))
+  }
+  
+  // MARK: - OpenAI-Compatible Streaming Completions
+  
+  func streamComplete(
+    userId: String,
+    messages: [ChatMessage],
+    options: CompletionOptions,
+    onChunk: @escaping (String) -> Void
+  ) async throws {
+    logInfo("Starting streaming completion with \(messages.count) messages")
+    
+    // Build OpenAI-compatible messages array
+    let messagesArray = messages.map { msg -> [String: String] in
+      return ["role": msg.role.rawValue, "content": msg.content]
+    }
+    
+    var body: [String: Any] = [
+      "model": options.model,
+      "messages": messagesArray,
+      "stream": true
+    ]
+    
+    if let temperature = options.temperature {
+      body["temperature"] = temperature
+    }
+    if let maxTokens = options.maxTokens {
+      body["max_tokens"] = maxTokens
+    }
+    
+    // Build headers for OpenAI-compatible endpoint
+    var headers: [String: String] = [
+      "X-User-Id": userId
+    ]
+    if let spaceId = options.spaceId {
+      headers["X-Space-Id"] = spaceId
+    }
+    if let botId = options.botId {
+      headers["X-Bot-Id"] = botId
+    }
+    
+    let endpoint = APIEndpoint(path: "/v1/chat/completions", method: .post, body: body, headers: headers)
+    let stream = try await apiClient.performStreamRequest(endpoint)
+    
+    for try await data in stream {
+      if let line = String(data: data, encoding: .utf8) {
+        processOpenAIStreamLine(line, onChunk: onChunk)
+      }
+    }
   }
 
   // MARK: - Private Methods
@@ -272,6 +328,39 @@ final class StreamingService: StreamingServiceProtocol {
         onChunk(textContent)
       }
     }
+  }
+  
+  private func processOpenAIStreamLine(_ line: String, onChunk: @escaping (String) -> Void) {
+    let trimmed = line.trimmingCharacters(in: .whitespaces)
+    
+    // Skip empty lines
+    if trimmed.isEmpty {
+      return
+    }
+    
+    // Check for SSE data prefix
+    guard line.hasPrefix("data: ") else {
+      return
+    }
+    
+    let content = String(line.dropFirst(6))
+    
+    // Check for [DONE] marker
+    if content == "[DONE]" {
+      return
+    }
+    
+    // Parse OpenAI streaming format
+    guard let data = content.data(using: .utf8),
+          let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+          let choices = json["choices"] as? [[String: Any]],
+          let firstChoice = choices.first,
+          let delta = firstChoice["delta"] as? [String: Any],
+          let textContent = delta["content"] as? String else {
+      return
+    }
+    
+    onChunk(textContent)
   }
 }
 
