@@ -60,7 +60,6 @@ class Mia21Client(
     private val spaceService: SpaceService
     private val conversationService: ConversationService
     private val streamingService: StreamingService
-    private val dynamicPromptService: DynamicPromptService
     private val transcriptionService: TranscriptionService
     
     /**
@@ -84,7 +83,6 @@ class Mia21Client(
         spaceService = SpaceService(apiClient)
         conversationService = ConversationService(apiClient)
         streamingService = StreamingService(apiClient)
-        dynamicPromptService = DynamicPromptService(apiClient, userId)
         transcriptionService = TranscriptionService(
             baseURL = baseURL,
             apiKey = apiKey,
@@ -267,67 +265,6 @@ class Mia21Client(
      */
     suspend fun transcribeAudio(audioData: ByteArray, language: String? = null): TranscriptionResponse {
         return transcriptionService.transcribeAudio(audioData = audioData, language = language)
-    }
-    
-    // ==================== Dynamic Prompting (OpenAI-Compatible) ====================
-    
-    /**
-     * Send a completion request using the OpenAI-compatible endpoint
-     * Perfect for dynamic prompting without pre-configuration
-     *
-     * Example:
-     * ```kotlin
-     * val messages = listOf(
-     *     ChatMessage(MessageRole.SYSTEM, "You are a helpful medical assistant."),
-     *     ChatMessage(MessageRole.USER, "I have a headache")
-     * )
-     * val response = client.complete(
-     *     messages = messages,
-     *     options = DynamicPromptOptions(model = "gpt-4o", spaceId = "medical-triage")
-     * )
-     * println(response.choices.firstOrNull()?.message?.content ?: "")
-     * ```
-     *
-     * @param messages Array of messages including system prompt
-     * @param options Configuration options for the request
-     * @return The completion response with AI's reply
-     * @throws Mia21Exception if the request fails
-     */
-    suspend fun complete(
-        messages: List<ChatMessage>,
-        options: DynamicPromptOptions = DynamicPromptOptions()
-    ): DynamicPromptResponse {
-        return dynamicPromptService.complete(messages = messages, options = options)
-    }
-    
-    /**
-     * Stream a completion request using the OpenAI-compatible endpoint
-     * Perfect for dynamic prompting with real-time response streaming
-     *
-     * Example:
-     * ```kotlin
-     * val messages = listOf(
-     *     ChatMessage(MessageRole.SYSTEM, "You are a friendly sales assistant."),
-     *     ChatMessage(MessageRole.USER, "What vitamins do you recommend?")
-     * )
-     * client.streamComplete(
-     *     messages = messages,
-     *     options = DynamicPromptOptions(model = "gpt-4o", spaceId = "pharmacy-sales")
-     * ).collect { chunk ->
-     *     print(chunk)
-     * }
-     * ```
-     *
-     * @param messages Array of messages including system prompt
-     * @param options Configuration options for the request
-     * @return Flow of text chunks
-     * @throws Mia21Exception if the request fails
-     */
-    fun streamComplete(
-        messages: List<ChatMessage>,
-        options: DynamicPromptOptions = DynamicPromptOptions()
-    ): Flow<String> {
-        return dynamicPromptService.streamComplete(messages = messages, options = options)
     }
     
     companion object {

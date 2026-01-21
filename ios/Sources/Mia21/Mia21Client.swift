@@ -38,7 +38,6 @@ public final class Mia21Client {
   private let streamingService: StreamingService
   private let transcriptionService: TranscriptionService
   private let conversationService: ConversationService
-  private let dynamicPromptService: DynamicPromptService
 
   // MARK: - Public Properties
 
@@ -89,7 +88,6 @@ public final class Mia21Client {
     self.spaceService = SpaceService(apiClient: apiClient)
     self.streamingService = StreamingService(apiClient: apiClient)
     self.conversationService = ConversationService(apiClient: apiClient)
-    self.dynamicPromptService = DynamicPromptService(apiClient: apiClient, defaultUserId: self.userId)
     self.transcriptionService = TranscriptionService(
       baseURL: baseURL,
       apiKey: apiKey,
@@ -106,7 +104,6 @@ public final class Mia21Client {
     spaceService: SpaceService,
     streamingService: StreamingService,
     conversationService: ConversationService,
-    dynamicPromptService: DynamicPromptService,
     transcriptionService: TranscriptionService
   ) {
     self.userId = userId
@@ -116,7 +113,6 @@ public final class Mia21Client {
     self.spaceService = spaceService
     self.streamingService = streamingService
     self.conversationService = conversationService
-    self.dynamicPromptService = dynamicPromptService
     self.transcriptionService = transcriptionService
   }
 
@@ -284,65 +280,5 @@ public final class Mia21Client {
   /// - Throws: Mia21Error if transcription fails
   public func transcribeAudio(audioData: Data, language: String? = nil) async throws -> TranscriptionResponse {
     return try await transcriptionService.transcribeAudio(audioData: audioData, language: language)
-  }
-  
-  // MARK: - Dynamic Prompting (OpenAI-Compatible)
-  
-  /// Send a completion request using the OpenAI-compatible endpoint
-  /// Perfect for dynamic prompting without pre-configuration
-  ///
-  /// Example:
-  /// ```swift
-  /// let messages = [
-  ///   ChatMessage(role: .system, content: "You are a helpful medical assistant."),
-  ///   ChatMessage(role: .user, content: "I have a headache")
-  /// ]
-  /// let response = try await client.complete(
-  ///   messages: messages,
-  ///   options: DynamicPromptOptions(model: "gpt-4o", spaceId: "medical-triage")
-  /// )
-  /// print(response.choices.first?.message.content ?? "")
-  /// ```
-  ///
-  /// - Parameters:
-  ///   - messages: Array of messages including system prompt
-  ///   - options: Configuration options for the request
-  /// - Returns: The completion response with AI's reply
-  /// - Throws: Mia21Error if the request fails
-  public func complete(
-    messages: [ChatMessage],
-    options: DynamicPromptOptions = DynamicPromptOptions()
-  ) async throws -> DynamicPromptResponse {
-    return try await dynamicPromptService.complete(messages: messages, options: options)
-  }
-  
-  /// Stream a completion request using the OpenAI-compatible endpoint
-  /// Perfect for dynamic prompting with real-time response streaming
-  ///
-  /// Example:
-  /// ```swift
-  /// let messages = [
-  ///   ChatMessage(role: .system, content: "You are a friendly sales assistant."),
-  ///   ChatMessage(role: .user, content: "What vitamins do you recommend?")
-  /// ]
-  /// try await client.streamComplete(
-  ///   messages: messages,
-  ///   options: DynamicPromptOptions(model: "gpt-4o", spaceId: "pharmacy-sales")
-  /// ) { chunk in
-  ///   print(chunk, terminator: "")
-  /// }
-  /// ```
-  ///
-  /// - Parameters:
-  ///   - messages: Array of messages including system prompt
-  ///   - options: Configuration options for the request
-  ///   - onChunk: Callback invoked for each text chunk received
-  /// - Throws: Mia21Error if the request fails
-  public func streamComplete(
-    messages: [ChatMessage],
-    options: DynamicPromptOptions = DynamicPromptOptions(),
-    onChunk: @escaping (String) -> Void
-  ) async throws {
-    try await dynamicPromptService.streamComplete(messages: messages, options: options, onChunk: onChunk)
   }
 }
