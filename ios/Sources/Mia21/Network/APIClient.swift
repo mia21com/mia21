@@ -122,7 +122,13 @@ final class APIClient: APIClientProtocol {
   // MARK: - Private Methods
 
   private func buildRequest(_ endpoint: APIEndpoint) throws -> URLRequest {
-    let fullURL = "\(baseURL)/api/v1\(endpoint.path)"
+    // OpenAI-compatible endpoints start with /v1/ and skip the /api prefix
+    let fullURL: String
+    if endpoint.path.hasPrefix("/v1/") {
+      fullURL = "\(baseURL)\(endpoint.path)"
+    } else {
+      fullURL = "\(baseURL)/api/v1\(endpoint.path)"
+    }
 
     guard let url = URL(string: fullURL) else {
       throw Mia21Error.invalidURL

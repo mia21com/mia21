@@ -34,7 +34,7 @@ final class ChatViewModel: ObservableObject {
   @Published var recordingStatusText: String = ""
   @Published var textFieldPlaceholder: String = "Message"
 
-  private let client: Mia21Client
+  let client: Mia21Client
   private let audioManager: AudioPlaybackManager
   private let handsFreeManager = HandsFreeAudioManager.shared
   private lazy var audioRecorder = AudioRecorderManager()
@@ -290,6 +290,65 @@ final class ChatViewModel: ObservableObject {
 
   func getChatTitle() -> String {
     return messages.first(where: { $0.isUser })?.text ?? "New Chat"
+  }
+  
+  // MARK: - Dynamic Prompting Example
+  
+  /// Example of using dynamic prompting - send a message with a custom system prompt
+  /// This uses the OpenAI-compatible endpoint for runtime AI configuration
+  func sendDynamicPromptMessage(_ text: String, systemPrompt: String) async {
+    guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, !isLoading else { return }
+    
+    addMessage(text: text, isUser: true)
+    setLoading(true)
+    
+    do {
+      // Build messages with custom system prompt
+      let apiMessages = [
+        Mia21.ChatMessage(role: .system, content: systemPrompt),
+        Mia21.ChatMessage(role: .user, content: text)
+      ]
+      
+      var fullResponse = ""
+      
+      // Add typing indicator
+      messages.append(ChatMessage(text: "", isUser: false, timestamp: Date(), isTypingIndicator: true))
+      let responseIndex = messages.count - 1
+      onMessagesUpdated?()
+      
+      // Stream the response using dynamic prompting
+      try await client.streamComplete(
+        messages: apiMessages,
+        options: DynamicPromptOptions(
+          model: "gpt-4o",
+          spaceId: "dynamic-prompt-demo",
+          temperature: 0.7
+        )
+      ) { [weak self] chunk in
+        Task { @MainActor [weak self] in
+          guard let self = self else { return }
+          fullResponse += chunk
+          
+          // Update the message with streaming content
+          if responseIndex < self.messages.count {
+            self.messages[responseIndex] = ChatMessage(
+              text: fullResponse,
+              isUser: false,
+              timestamp: Date()
+            )
+            self.onMessagesUpdated?()
+          }
+        }
+      }
+      
+    } catch {
+      if messages.last?.isTypingIndicator == true || messages.last?.text.isEmpty == true {
+        messages.removeLast()
+      }
+      showError("Dynamic prompt failed: \(error.localizedDescription)")
+    }
+    
+    setLoading(false)
   }
 
   private func sendMessageTextOnly(_ text: String, typingIndicatorIndex: Int) async throws {
