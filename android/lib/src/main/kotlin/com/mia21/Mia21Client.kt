@@ -109,6 +109,21 @@ class Mia21Client(
         return spaceService.listBots()
     }
     
+    /**
+     * List conversations within a space.
+     * Useful for admin dashboards, analytics, and bulk operations.
+     * @param spaceId The space ID to list conversations for
+     * @param options Filter and pagination options
+     * @return SpaceConversationsResponse containing conversations and pagination info
+     * @throws Mia21Exception if the request fails
+     */
+    suspend fun listSpaceConversations(
+        spaceId: String,
+        options: SpaceConversationsOptions = SpaceConversationsOptions()
+    ): SpaceConversationsResponse {
+        return spaceService.listSpaceConversations(spaceId = spaceId, options = options)
+    }
+    
 
     /**
      * Initialize a chat session
@@ -189,6 +204,22 @@ class Mia21Client(
         return streamingService.streamComplete(
             userId = userId,
             messages = messages,
+            options = options
+        )
+    }
+    
+    /**
+     * Generate a personalized greeting based on the user's conversation history.
+     * Perfect for chat initialization screens. Uses the OpenAI-compatible /v1/chat/initialize endpoint.
+     * @param options Configuration options for initialization
+     * @return ChatInitializeResponse containing personalized greeting and user context
+     * @throws Mia21Exception if the request fails
+     */
+    suspend fun initializeChat(
+        options: ChatInitializeOptions = ChatInitializeOptions()
+    ): ChatInitializeResponse {
+        return chatService.initializeChat(
+            userId = userId,
             options = options
         )
     }

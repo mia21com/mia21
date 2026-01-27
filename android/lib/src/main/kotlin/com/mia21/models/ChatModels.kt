@@ -121,3 +121,60 @@ data class CompletionUsage(
     val totalTokens: Int? = null
 )
 
+/**
+ * Options for OpenAI-compatible /v1/chat/initialize endpoint.
+ * Generates a personalized greeting based on user's conversation history.
+ */
+data class ChatInitializeOptions(
+    /** Space ID for context separation (passed via X-Space-Id header) */
+    val spaceId: String? = null,
+    /** Bot ID for specific bot behavior (passed via X-Bot-Id header) */
+    val botId: String? = null,
+    /** Model to use for generating the greeting (e.g., "gpt-4o", "gpt-4o-mini") */
+    val model: String = "gpt-4o",
+    /** Language code for the greeting (e.g., "en", "es", "fr") */
+    val language: String? = null,
+    /** User's name for personalization */
+    val userName: String? = null,
+    /** User's timezone for context-aware greetings */
+    val timezone: String? = null
+)
+
+/**
+ * Response from OpenAI-compatible /v1/chat/initialize endpoint
+ */
+@Serializable
+data class ChatInitializeResponse(
+    /** Unique identifier for the initialization request */
+    val id: String? = null,
+    /** Object type (e.g., "chat.initialize") */
+    val `object`: String? = null,
+    /** Unix timestamp of creation */
+    val created: Int? = null,
+    /** Model used to generate the greeting */
+    val model: String? = null,
+    /** Personalized greeting message based on conversation history */
+    val greeting: String? = null,
+    /** Context about the user derived from history */
+    @SerialName("user_context")
+    val userContext: ChatUserContext? = null
+)
+
+/**
+ * User context derived from conversation history
+ */
+@Serializable
+data class ChatUserContext(
+    /** Number of previous conversations */
+    @SerialName("conversation_count")
+    val conversationCount: Int? = null,
+    /** Last interaction timestamp */
+    @SerialName("last_interaction")
+    val lastInteraction: String? = null,
+    /** Topics the user has discussed */
+    val topics: List<String>? = null,
+    /** Whether this is a returning user */
+    @SerialName("is_returning_user")
+    val isReturningUser: Boolean? = null
+)
+

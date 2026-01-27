@@ -59,3 +59,78 @@ data class SpaceConfig(
     val presencePenalty: Double? = null
 )
 
+/**
+ * Conversation status filter options
+ */
+enum class ConversationStatus(val value: String) {
+    ACTIVE("active"),
+    CLOSED("closed"),
+    ARCHIVED("archived")
+}
+
+/**
+ * Options for listing conversations within a space
+ */
+data class SpaceConversationsOptions(
+    /** Filter by specific user ID */
+    val userId: String? = null,
+    /** Filter by bot ID */
+    val botId: String? = null,
+    /** Filter by conversation status */
+    val status: ConversationStatus? = null,
+    /** Maximum number of conversations to return (1-500, default: 100) */
+    val limit: Int = 100,
+    /** Offset for pagination */
+    val offset: Int = 0
+)
+
+/**
+ * Response containing conversations within a space
+ */
+@Serializable
+data class SpaceConversationsResponse(
+    /** The space ID */
+    @SerialName("space_id")
+    val spaceId: String,
+    /** Total count of conversations matching the filter */
+    @SerialName("total_count")
+    val totalCount: Int,
+    /** List of conversations */
+    val conversations: List<SpaceConversation>,
+    /** Limit used for the query */
+    val limit: Int,
+    /** Offset used for the query */
+    val offset: Int
+)
+
+/**
+ * A conversation within a space
+ */
+@Serializable
+data class SpaceConversation(
+    /** Unique conversation identifier */
+    val id: String,
+    /** User ID who owns this conversation */
+    @SerialName("user_id")
+    val userId: String,
+    /** Space ID this conversation belongs to */
+    @SerialName("space_id")
+    val spaceId: String,
+    /** Bot ID used in this conversation */
+    @SerialName("bot_id")
+    val botId: String? = null,
+    /** Conversation title */
+    val title: String? = null,
+    /** Conversation status */
+    val status: String,
+    /** Creation timestamp */
+    @SerialName("created_at")
+    val createdAt: String,
+    /** Last update timestamp */
+    @SerialName("updated_at")
+    val updatedAt: String,
+    /** Number of messages in the conversation */
+    @SerialName("message_count")
+    val messageCount: Int
+)
+

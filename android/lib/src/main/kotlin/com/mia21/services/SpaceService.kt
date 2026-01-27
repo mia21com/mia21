@@ -54,5 +54,38 @@ class SpaceService(private val apiClient: APIClient) {
         val response = apiClient.json.decodeFromString<BotsResponse>(jsonResponse)
         return response.bots
     }
+    
+    /**
+     * List conversations within a space.
+     * Useful for admin dashboards, analytics, and bulk operations.
+     */
+    suspend fun listSpaceConversations(
+        spaceId: String,
+        options: SpaceConversationsOptions
+    ): SpaceConversationsResponse {
+        Logger.debug("Listing conversations for space: $spaceId")
+        
+        // Build query parameters
+        val queryParams = mutableListOf<String>()
+        
+        options.userId?.let { queryParams.add("user_id=$it") }
+        options.botId?.let { queryParams.add("bot_id=$it") }
+        options.status?.let { queryParams.add("status=${it.value}") }
+        queryParams.add("limit=${options.limit.coerceIn(1, 500)}")
+        queryParams.add("offset=${maxOf(options.offset, 0)}")
+        
+        val queryString = if (queryParams.isNotEmpty()) "?${queryParams.joinToString("&")}" else ""
+        val path = "/spaces/$spaceId/conversations$queryString"
+        
+        val endpoint = APIEndpoint(
+            path = path,
+            method = HTTPMethod.GET
+        )
+        
+        val jsonResponse = apiClient.performRequest(endpoint, String::class.java)
+        val response = apiClient.json.decodeFromString<SpaceConversationsResponse>(jsonResponse)
+        Logger.debug("Found ${response.totalCount} conversations in space $spaceId")
+        return response
+    }
 }
 

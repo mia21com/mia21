@@ -26,6 +26,7 @@ interface ChatServiceProtocol {
     suspend fun initialize(userId: String, options: InitializeOptions, customerLlmKey: String?): InitializeResponse
     suspend fun sendMessage(userId: String, message: String, options: ChatOptions, customerLlmKey: String?, currentSpace: String?): ChatResponse
     suspend fun complete(userId: String, messages: List<ChatMessage>, options: CompletionOptions): CompletionResponse
+    suspend fun initializeChat(userId: String, options: ChatInitializeOptions): ChatInitializeResponse
     suspend fun close(userId: String, spaceId: String?)
 }
 
@@ -166,6 +167,43 @@ class ChatService(private val apiClient: APIClient) : ChatServiceProtocol {
         
         val jsonResponse = apiClient.performRequest(endpoint, String::class.java)
         return apiClient.json.decodeFromString<CompletionResponse>(jsonResponse)
+    }
+    
+    /**
+     * Generate a personalized greeting based on user's conversation history.
+     * Uses the OpenAI-compatible /v1/chat/initialize endpoint.
+     */
+    override suspend fun initializeChat(
+        userId: String,
+        options: ChatInitializeOptions
+    ): ChatInitializeResponse {
+        Logger.debug("Initializing chat with personalized greeting for user: $userId")
+        
+        val body = mutableMapOf<String, Any?>(
+            "model" to options.model
+        )
+        
+        options.language?.let { body["language"] = it }
+        options.userName?.let { body["user_name"] = it }
+        options.timezone?.let { body["timezone"] = it }
+        
+        // Build headers for OpenAI-compatible endpoint
+        val headers = mutableMapOf("X-User-Id" to userId)
+        options.spaceId?.let { headers["X-Space-Id"] = it }
+        options.botId?.let { headers["X-Bot-Id"] = it }
+        
+        val endpoint = APIEndpoint(
+            path = "/v1/chat/initialize",
+            method = HTTPMethod.POST,
+            body = body,
+            headers = headers
+        )
+        
+        val jsonResponse = apiClient.performRequest(endpoint, String::class.java)
+        val response = apiClient.json.decodeFromString<ChatInitializeResponse>(jsonResponse)
+        
+        Logger.debug("Chat initialized with personalized greeting: ${response.greeting}")
+        return response
     }
 }
 

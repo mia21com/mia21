@@ -19,6 +19,7 @@ protocol ChatServiceProtocol {
   func initialize(userId: String, options: InitializeOptions, customerLlmKey: String?) async throws -> InitializeResponse
   func sendMessage(userId: String, message: String, options: ChatOptions, customerLlmKey: String?, currentSpace: String?) async throws -> ChatResponse
   func complete(userId: String, messages: [ChatMessage], options: CompletionOptions) async throws -> CompletionResponse
+  func initializeChat(userId: String, options: ChatInitializeOptions) async throws -> ChatInitializeResponse
   func close(userId: String, spaceId: String?) async throws
 }
 
@@ -188,5 +189,44 @@ final class ChatService: ChatServiceProtocol {
     
     let endpoint = APIEndpoint(path: "/v1/chat/completions", method: .post, body: body, headers: headers)
     return try await apiClient.performRequest(endpoint)
+  }
+  
+  // MARK: - OpenAI-Compatible Chat Initialize
+  
+  func initializeChat(userId: String, options: ChatInitializeOptions) async throws -> ChatInitializeResponse {
+    logInfo("Initializing chat with personalized greeting for user: \(userId)")
+    
+    var body: [String: Any] = [
+      "model": options.model
+    ]
+    
+    if let language = options.language {
+      body["language"] = language
+    }
+    if let userName = options.userName {
+      body["user_name"] = userName
+    }
+    if let timezone = options.timezone {
+      body["timezone"] = timezone
+    }
+    
+    // Build headers for OpenAI-compatible endpoint
+    var headers: [String: String] = [
+      "X-User-Id": userId
+    ]
+    if let spaceId = options.spaceId {
+      headers["X-Space-Id"] = spaceId
+    }
+    if let botId = options.botId {
+      headers["X-Bot-Id"] = botId
+    }
+    
+    let endpoint = APIEndpoint(path: "/v1/chat/initialize", method: .post, body: body, headers: headers)
+    let response: ChatInitializeResponse = try await apiClient.performRequest(endpoint)
+    
+    logInfo("Chat initialized with personalized greeting")
+    logDebug("Greeting: \(response.greeting ?? "none")")
+    
+    return response
   }
 }

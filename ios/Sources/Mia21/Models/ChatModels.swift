@@ -143,3 +143,66 @@ public struct CompletionUsage: Codable {
   public let completionTokens: Int?
   public let totalTokens: Int?
 }
+
+// MARK: - OpenAI-Compatible Chat Initialize
+
+/// Options for OpenAI-compatible `/v1/chat/initialize` endpoint.
+/// Generates a personalized greeting based on user's conversation history.
+public struct ChatInitializeOptions {
+  /// Space ID for context separation (passed via X-Space-Id header)
+  public var spaceId: String?
+  /// Bot ID for specific bot behavior (passed via X-Bot-Id header)
+  public var botId: String?
+  /// Model to use for generating the greeting (e.g., "gpt-4o", "gpt-4o-mini")
+  public var model: String
+  /// Language code for the greeting (e.g., "en", "es", "fr")
+  public var language: String?
+  /// User's name for personalization
+  public var userName: String?
+  /// User's timezone for context-aware greetings
+  public var timezone: String?
+  
+  public init(
+    spaceId: String? = nil,
+    botId: String? = nil,
+    model: String = "gpt-4o",
+    language: String? = nil,
+    userName: String? = nil,
+    timezone: String? = nil
+  ) {
+    self.spaceId = spaceId
+    self.botId = botId
+    self.model = model
+    self.language = language
+    self.userName = userName
+    self.timezone = timezone
+  }
+}
+
+/// Response from OpenAI-compatible `/v1/chat/initialize` endpoint
+public struct ChatInitializeResponse: Codable {
+  /// Unique identifier for the initialization request
+  public let id: String?
+  /// Object type (e.g., "chat.initialize")
+  public let object: String?
+  /// Unix timestamp of creation
+  public let created: Int?
+  /// Model used to generate the greeting
+  public let model: String?
+  /// Personalized greeting message based on conversation history
+  public let greeting: String?
+  /// Context about the user derived from history
+  public let userContext: ChatUserContext?
+}
+
+/// User context derived from conversation history
+public struct ChatUserContext: Codable {
+  /// Number of previous conversations
+  public let conversationCount: Int?
+  /// Last interaction timestamp
+  public let lastInteraction: String?
+  /// Topics the user has discussed
+  public let topics: [String]?
+  /// Whether this is a returning user
+  public let isReturningUser: Bool?
+}

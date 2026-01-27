@@ -131,6 +131,19 @@ public final class Mia21Client {
   public func listBots() async throws -> [Bot] {
     return try await spaceService.listBots()
   }
+  
+  /// List conversations within a space. Useful for admin dashboards, analytics, and bulk operations.
+  /// - Parameters:
+  ///   - spaceId: The space ID to list conversations for
+  ///   - options: Filter and pagination options
+  /// - Returns: SpaceConversationsResponse containing conversations and pagination info
+  /// - Throws: Mia21Error if the request fails
+  public func listSpaceConversations(
+    spaceId: String,
+    options: SpaceConversationsOptions = SpaceConversationsOptions()
+  ) async throws -> SpaceConversationsResponse {
+    return try await spaceService.listSpaceConversations(spaceId: spaceId, options: options)
+  }
 
   // MARK: - Chat Operations
 
@@ -209,6 +222,20 @@ public final class Mia21Client {
       messages: messages,
       options: options,
       onChunk: onChunk
+    )
+  }
+  
+  /// Generate a personalized greeting based on the user's conversation history.
+  /// Perfect for chat initialization screens. Uses the OpenAI-compatible `/v1/chat/initialize` endpoint.
+  /// - Parameter options: Configuration options for initialization
+  /// - Returns: ChatInitializeResponse containing personalized greeting and user context
+  /// - Throws: Mia21Error if the request fails
+  public func initializeChat(
+    options: ChatInitializeOptions = ChatInitializeOptions()
+  ) async throws -> ChatInitializeResponse {
+    return try await chatService.initializeChat(
+      userId: userId,
+      options: options
     )
   }
 
