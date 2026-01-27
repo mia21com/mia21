@@ -178,7 +178,7 @@ class Mia21Client(
      * @return CompletionResponse containing the AI's response in OpenAI format
      * @throws Mia21Exception if the request fails
      */
-    suspend fun complete(
+    suspend fun openAIComplete(
         messages: List<ChatMessage>,
         options: CompletionOptions = CompletionOptions()
     ): CompletionResponse {
@@ -197,7 +197,7 @@ class Mia21Client(
      * @return Flow of text chunks
      * @throws Mia21Exception if the request fails
      */
-    fun streamComplete(
+    fun openAIStreamComplete(
         messages: List<ChatMessage>,
         options: CompletionOptions = CompletionOptions()
     ): Flow<String> {
@@ -209,8 +209,9 @@ class Mia21Client(
     }
     
     /**
-     * Generate a personalized greeting based on the user's conversation history and memories.
-     * Perfect for chat initialization screens. Uses the OpenAI-compatible /v1/chat/initialize endpoint.
+     * Initialize a chat using the OpenAI-compatible /v1/chat/initialize endpoint.
+     * Generates a personalized greeting based on the user's conversation history and memories.
+     * Perfect for chat initialization screens.
      * 
      * The greeting will reference past conversations if available, creating a more engaging
      * user experience like "Hello again! Last time we discussed..."
@@ -219,7 +220,7 @@ class Mia21Client(
      * @return GreetingResponse containing personalized greeting and optional audio
      * @throws Mia21Exception if the request fails
      */
-    suspend fun generateGreeting(
+    suspend fun openAIInitializeChat(
         options: GreetingOptions = GreetingOptions()
     ): GreetingResponse {
         return chatService.generateGreeting(
@@ -229,13 +230,23 @@ class Mia21Client(
     }
     
     /**
-     * Backward compatibility alias for generateGreeting
+     * Backward compatibility alias for openAIInitializeChat
      */
-    @Deprecated("Use generateGreeting instead", ReplaceWith("generateGreeting(options)"))
+    @Deprecated("Use openAIInitializeChat instead", ReplaceWith("openAIInitializeChat(options)"))
+    suspend fun generateGreeting(
+        options: GreetingOptions = GreetingOptions()
+    ): GreetingResponse {
+        return openAIInitializeChat(options)
+    }
+    
+    /**
+     * Backward compatibility alias for openAIInitializeChat
+     */
+    @Deprecated("Use openAIInitializeChat instead", ReplaceWith("openAIInitializeChat(options)"))
     suspend fun initializeChat(
         options: GreetingOptions = GreetingOptions()
     ): GreetingResponse {
-        return generateGreeting(options)
+        return openAIInitializeChat(options)
     }
 
 

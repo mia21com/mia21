@@ -194,7 +194,7 @@ public final class Mia21Client {
   ///   - options: Completion configuration (model, temperature, etc.)
   /// - Returns: CompletionResponse containing the AI's response in OpenAI format
   /// - Throws: Mia21Error if the request fails
-  public func complete(
+  public func openAIComplete(
     messages: [ChatMessage],
     options: CompletionOptions = CompletionOptions()
   ) async throws -> CompletionResponse {
@@ -212,7 +212,7 @@ public final class Mia21Client {
   ///   - options: Completion configuration (model, temperature, etc.)
   ///   - onChunk: Callback invoked for each text chunk received
   /// - Throws: Mia21Error if the request fails
-  public func streamComplete(
+  public func openAIStreamComplete(
     messages: [ChatMessage],
     options: CompletionOptions = CompletionOptions(),
     onChunk: @escaping (String) -> Void
@@ -225,8 +225,9 @@ public final class Mia21Client {
     )
   }
   
-  /// Generate a personalized greeting based on the user's conversation history and memories.
-  /// Perfect for chat initialization screens. Uses the OpenAI-compatible `/v1/chat/initialize` endpoint.
+  /// Initialize a chat using the OpenAI-compatible `/v1/chat/initialize` endpoint.
+  /// Generates a personalized greeting based on the user's conversation history and memories.
+  /// Perfect for chat initialization screens.
   /// 
   /// The greeting will reference past conversations if available, creating a more engaging
   /// user experience like "Hello again! Last time we discussed..."
@@ -234,21 +235,13 @@ public final class Mia21Client {
   /// - Parameter options: Configuration options (all passed via HTTP headers)
   /// - Returns: GreetingResponse containing personalized greeting and optional audio
   /// - Throws: Mia21Error if the request fails
-  public func generateGreeting(
+  public func openAIInitializeChat(
     options: GreetingOptions = GreetingOptions()
   ) async throws -> GreetingResponse {
     return try await chatService.generateGreeting(
       userId: userId,
       options: options
     )
-  }
-  
-  /// Backward compatibility alias for generateGreeting
-  @available(*, deprecated, renamed: "generateGreeting")
-  public func initializeChat(
-    options: GreetingOptions = GreetingOptions()
-  ) async throws -> GreetingResponse {
-    return try await generateGreeting(options: options)
   }
 
   // MARK: - Streaming Operations
