@@ -157,7 +157,8 @@ class StreamingService(private val apiClient: APIClient) {
     
     /**
      * Stream completion using the OpenAI-compatible endpoint.
-     * No bot/space pre-configuration required - include system message in the messages list.
+     * Fully compatible with OpenAI's API - standard OpenAI SDKs work by just changing base_url.
+     * Mia21 extensions are passed via HTTP headers.
      */
     fun streamComplete(
         userId: String,
@@ -166,7 +167,7 @@ class StreamingService(private val apiClient: APIClient) {
     ): Flow<String> = callbackFlow {
         Logger.debug("Starting streaming completion with ${messages.size} messages")
         
-        // Build OpenAI-compatible messages array
+        // Build OpenAI-compatible messages array (standard OpenAI body format)
         val messagesList = messages.map { msg ->
             mapOf("role" to msg.role.name.lowercase(), "content" to msg.content)
         }
@@ -180,10 +181,17 @@ class StreamingService(private val apiClient: APIClient) {
         options.temperature?.let { body["temperature"] = it }
         options.maxTokens?.let { body["max_tokens"] = it }
         
-        // Build headers for OpenAI-compatible endpoint
-        val headers = mutableMapOf("X-User-Id" to userId)
+        // Build Mia21 extension headers
+        val headers = mutableMapOf<String, String>()
+        
+        // User ID for memory isolation
+        headers["X-User-Id"] = userId
+        
         options.spaceId?.let { headers["X-Space-Id"] = it }
-        options.botId?.let { headers["X-Bot-Id"] = it }
+        options.agentId?.let { headers["X-Agent-Id"] = it }
+        options.voiceEnabled?.let { headers["X-Voice-Enabled"] = if (it) "true" else "false" }
+        options.voiceId?.let { headers["X-Voice-Id"] = it }
+        options.incognito?.let { headers["X-Incognito"] = if (it) "true" else "false" }
         
         val endpoint = APIEndpoint(
             path = "/v1/chat/completions",

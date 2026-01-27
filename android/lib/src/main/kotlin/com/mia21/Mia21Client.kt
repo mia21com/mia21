@@ -209,19 +209,33 @@ class Mia21Client(
     }
     
     /**
-     * Generate a personalized greeting based on the user's conversation history.
+     * Generate a personalized greeting based on the user's conversation history and memories.
      * Perfect for chat initialization screens. Uses the OpenAI-compatible /v1/chat/initialize endpoint.
-     * @param options Configuration options for initialization
-     * @return ChatInitializeResponse containing personalized greeting and user context
+     * 
+     * The greeting will reference past conversations if available, creating a more engaging
+     * user experience like "Hello again! Last time we discussed..."
+     * 
+     * @param options Configuration options (all passed via HTTP headers)
+     * @return GreetingResponse containing personalized greeting and optional audio
      * @throws Mia21Exception if the request fails
      */
-    suspend fun initializeChat(
-        options: ChatInitializeOptions = ChatInitializeOptions()
-    ): ChatInitializeResponse {
-        return chatService.initializeChat(
+    suspend fun generateGreeting(
+        options: GreetingOptions = GreetingOptions()
+    ): GreetingResponse {
+        return chatService.generateGreeting(
             userId = userId,
             options = options
         )
+    }
+    
+    /**
+     * Backward compatibility alias for generateGreeting
+     */
+    @Deprecated("Use generateGreeting instead", ReplaceWith("generateGreeting(options)"))
+    suspend fun initializeChat(
+        options: GreetingOptions = GreetingOptions()
+    ): GreetingResponse {
+        return generateGreeting(options)
     }
 
 

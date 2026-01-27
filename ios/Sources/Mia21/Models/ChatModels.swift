@@ -82,12 +82,11 @@ public struct ToolCall: Codable {
 // MARK: - OpenAI-Compatible Completion Options
 
 /// Options for OpenAI-compatible `/v1/chat/completions` endpoint.
-/// No bot/space pre-configuration required - just pass messages with system prompt.
+/// Fully compatible with OpenAI's API - standard OpenAI SDKs work by just changing the base_url.
+/// Mia21 extensions are passed via HTTP headers.
 public struct CompletionOptions {
-  /// Space ID for context separation (passed via X-Space-Id header)
-  public var spaceId: String?
-  /// Bot ID for specific bot behavior (passed via X-Bot-Id header)
-  public var botId: String?
+  // MARK: - OpenAI Standard Parameters (in request body)
+  
   /// Model to use (e.g., "gpt-4o", "gpt-4o-mini")
   public var model: String
   /// Temperature for response randomness (0.0 - 2.0)
@@ -97,20 +96,60 @@ public struct CompletionOptions {
   /// Whether to stream the response
   public var stream: Bool
   
+  // MARK: - Mia21 Extensions (via HTTP headers)
+  
+  /// Space ID for memory isolation (X-Space-Id header, default: "default")
+  public var spaceId: String?
+  /// Agent ID for specific agent behavior (X-Agent-Id header)
+  public var agentId: String?
+  /// Enable voice output (X-Voice-Enabled header, default: false)
+  public var voiceEnabled: Bool?
+  /// ElevenLabs voice ID for TTS (X-Voice-Id header)
+  public var voiceId: String?
+  /// Disable memory - no history used or saved (X-Incognito header, default: false)
+  public var incognito: Bool?
+  
+  public init(
+    model: String = "gpt-4o",
+    temperature: Double? = nil,
+    maxTokens: Int? = nil,
+    stream: Bool = false,
+    spaceId: String? = nil,
+    agentId: String? = nil,
+    voiceEnabled: Bool? = nil,
+    voiceId: String? = nil,
+    incognito: Bool? = nil
+  ) {
+    self.model = model
+    self.temperature = temperature
+    self.maxTokens = maxTokens
+    self.stream = stream
+    self.spaceId = spaceId
+    self.agentId = agentId
+    self.voiceEnabled = voiceEnabled
+    self.voiceId = voiceId
+    self.incognito = incognito
+  }
+  
+  /// Backward compatibility initializer with botId
+  @available(*, deprecated, message: "Use agentId instead of botId")
   public init(
     spaceId: String? = nil,
-    botId: String? = nil,
+    botId: String?,
     model: String = "gpt-4o",
     temperature: Double? = nil,
     maxTokens: Int? = nil,
     stream: Bool = false
   ) {
-    self.spaceId = spaceId
-    self.botId = botId
     self.model = model
     self.temperature = temperature
     self.maxTokens = maxTokens
     self.stream = stream
+    self.spaceId = spaceId
+    self.agentId = botId  // Map botId to agentId
+    self.voiceEnabled = nil
+    self.voiceId = nil
+    self.incognito = nil
   }
 }
 
@@ -144,44 +183,45 @@ public struct CompletionUsage: Codable {
   public let totalTokens: Int?
 }
 
-// MARK: - OpenAI-Compatible Chat Initialize
+// MARK: - OpenAI-Compatible Chat Initialize (Greeting Generation)
 
 /// Options for OpenAI-compatible `/v1/chat/initialize` endpoint.
-/// Generates a personalized greeting based on user's conversation history.
-public struct ChatInitializeOptions {
-  /// Space ID for context separation (passed via X-Space-Id header)
+/// Generates a personalized greeting based on user's conversation history and memories.
+/// All parameters are passed via HTTP headers (no request body).
+public struct GreetingOptions {
+  /// Space ID for context separation (X-Space-Id header)
   public var spaceId: String?
-  /// Bot ID for specific bot behavior (passed via X-Bot-Id header)
-  public var botId: String?
-  /// Model to use for generating the greeting (e.g., "gpt-4o", "gpt-4o-mini")
-  public var model: String
-  /// Language code for the greeting (e.g., "en", "es", "fr")
-  public var language: String?
-  /// User's name for personalization
-  public var userName: String?
-  /// User's timezone for context-aware greetings
-  public var timezone: String?
+  /// Agent ID for greeting style (X-Agent-Id header)
+  public var agentId: String?
+  /// Enable voice in response (X-Voice-Enabled header)
+  public var voiceEnabled: Bool?
+  /// Voice ID for TTS (X-Voice-Id header)
+  public var voiceId: String?
+  /// If true, no memory is used or saved (X-Incognito header)
+  public var incognito: Bool?
   
   public init(
     spaceId: String? = nil,
-    botId: String? = nil,
-    model: String = "gpt-4o",
-    language: String? = nil,
-    userName: String? = nil,
-    timezone: String? = nil
+    agentId: String? = nil,
+    voiceEnabled: Bool? = nil,
+    voiceId: String? = nil,
+    incognito: Bool? = nil
   ) {
     self.spaceId = spaceId
-    self.botId = botId
-    self.model = model
-    self.language = language
-    self.userName = userName
-    self.timezone = timezone
+    self.agentId = agentId
+    self.voiceEnabled = voiceEnabled
+    self.voiceId = voiceId
+    self.incognito = incognito
   }
 }
 
+/// Backward compatibility alias
+@available(*, deprecated, renamed: "GreetingOptions")
+public typealias ChatInitializeOptions = GreetingOptions
+
 /// Response from OpenAI-compatible `/v1/chat/initialize` endpoint
-public struct ChatInitializeResponse: Codable {
-  /// Unique identifier for the initialization request
+public struct GreetingResponse: Codable {
+  /// Unique identifier for the request
   public let id: String?
   /// Object type (e.g., "chat.initialize")
   public let object: String?
@@ -192,11 +232,13 @@ public struct ChatInitializeResponse: Codable {
   /// Personalized greeting message based on conversation history
   public let greeting: String?
   /// Context about the user derived from history
-  public let userContext: ChatUserContext?
+  public let userContext: GreetingUserContext?
+  /// Audio data if voice was enabled (base64 encoded)
+  public let audio: String?
 }
 
 /// User context derived from conversation history
-public struct ChatUserContext: Codable {
+public struct GreetingUserContext: Codable {
   /// Number of previous conversations
   public let conversationCount: Int?
   /// Last interaction timestamp
@@ -206,3 +248,9 @@ public struct ChatUserContext: Codable {
   /// Whether this is a returning user
   public let isReturningUser: Bool?
 }
+
+/// Backward compatibility aliases
+@available(*, deprecated, renamed: "GreetingResponse")
+public typealias ChatInitializeResponse = GreetingResponse
+@available(*, deprecated, renamed: "GreetingUserContext")
+public typealias ChatUserContext = GreetingUserContext

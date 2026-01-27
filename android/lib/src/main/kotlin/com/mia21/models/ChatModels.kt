@@ -66,13 +66,12 @@ data class ToolCall(
 
 /**
  * Options for OpenAI-compatible /v1/chat/completions endpoint.
- * No bot/space pre-configuration required - just pass messages with system prompt.
+ * Fully compatible with OpenAI's API - standard OpenAI SDKs work by just changing the base_url.
+ * Mia21 extensions are passed via HTTP headers.
  */
 data class CompletionOptions(
-    /** Space ID for context separation (passed via X-Space-Id header) */
-    val spaceId: String? = null,
-    /** Bot ID for specific bot behavior (passed via X-Bot-Id header) */
-    val botId: String? = null,
+    // OpenAI Standard Parameters (in request body)
+    
     /** Model to use (e.g., "gpt-4o", "gpt-4o-mini") */
     val model: String = "gpt-4o",
     /** Temperature for response randomness (0.0 - 2.0) */
@@ -80,8 +79,39 @@ data class CompletionOptions(
     /** Maximum tokens in response */
     val maxTokens: Int? = null,
     /** Whether to stream the response */
-    val stream: Boolean = false
-)
+    val stream: Boolean = false,
+    
+    // Mia21 Extensions (via HTTP headers)
+    
+    /** Space ID for memory isolation (X-Space-Id header, default: "default") */
+    val spaceId: String? = null,
+    /** Agent ID for specific agent behavior (X-Agent-Id header) */
+    val agentId: String? = null,
+    /** Enable voice output (X-Voice-Enabled header, default: false) */
+    val voiceEnabled: Boolean? = null,
+    /** ElevenLabs voice ID for TTS (X-Voice-Id header) */
+    val voiceId: String? = null,
+    /** Disable memory - no history used or saved (X-Incognito header, default: false) */
+    val incognito: Boolean? = null
+) {
+    /** Backward compatibility constructor with botId */
+    @Deprecated("Use agentId instead of botId", ReplaceWith("CompletionOptions(model, temperature, maxTokens, stream, spaceId, agentId = botId)"))
+    constructor(
+        spaceId: String?,
+        botId: String?,
+        model: String = "gpt-4o",
+        temperature: Double? = null,
+        maxTokens: Int? = null,
+        stream: Boolean = false
+    ) : this(
+        model = model,
+        temperature = temperature,
+        maxTokens = maxTokens,
+        stream = stream,
+        spaceId = spaceId,
+        agentId = botId  // Map botId to agentId
+    )
+}
 
 /**
  * Response from OpenAI-compatible /v1/chat/completions endpoint
@@ -123,29 +153,32 @@ data class CompletionUsage(
 
 /**
  * Options for OpenAI-compatible /v1/chat/initialize endpoint.
- * Generates a personalized greeting based on user's conversation history.
+ * Generates a personalized greeting based on user's conversation history and memories.
+ * All parameters are passed via HTTP headers (no request body).
  */
-data class ChatInitializeOptions(
-    /** Space ID for context separation (passed via X-Space-Id header) */
+data class GreetingOptions(
+    /** Space ID for context separation (X-Space-Id header) */
     val spaceId: String? = null,
-    /** Bot ID for specific bot behavior (passed via X-Bot-Id header) */
-    val botId: String? = null,
-    /** Model to use for generating the greeting (e.g., "gpt-4o", "gpt-4o-mini") */
-    val model: String = "gpt-4o",
-    /** Language code for the greeting (e.g., "en", "es", "fr") */
-    val language: String? = null,
-    /** User's name for personalization */
-    val userName: String? = null,
-    /** User's timezone for context-aware greetings */
-    val timezone: String? = null
+    /** Agent ID for greeting style (X-Agent-Id header) */
+    val agentId: String? = null,
+    /** Enable voice in response (X-Voice-Enabled header) */
+    val voiceEnabled: Boolean? = null,
+    /** Voice ID for TTS (X-Voice-Id header) */
+    val voiceId: String? = null,
+    /** If true, no memory is used or saved (X-Incognito header) */
+    val incognito: Boolean? = null
 )
+
+/** Backward compatibility alias */
+@Deprecated("Use GreetingOptions instead", ReplaceWith("GreetingOptions"))
+typealias ChatInitializeOptions = GreetingOptions
 
 /**
  * Response from OpenAI-compatible /v1/chat/initialize endpoint
  */
 @Serializable
-data class ChatInitializeResponse(
-    /** Unique identifier for the initialization request */
+data class GreetingResponse(
+    /** Unique identifier for the request */
     val id: String? = null,
     /** Object type (e.g., "chat.initialize") */
     val `object`: String? = null,
@@ -157,14 +190,20 @@ data class ChatInitializeResponse(
     val greeting: String? = null,
     /** Context about the user derived from history */
     @SerialName("user_context")
-    val userContext: ChatUserContext? = null
+    val userContext: GreetingUserContext? = null,
+    /** Audio data if voice was enabled (base64 encoded) */
+    val audio: String? = null
 )
+
+/** Backward compatibility alias */
+@Deprecated("Use GreetingResponse instead", ReplaceWith("GreetingResponse"))
+typealias ChatInitializeResponse = GreetingResponse
 
 /**
  * User context derived from conversation history
  */
 @Serializable
-data class ChatUserContext(
+data class GreetingUserContext(
     /** Number of previous conversations */
     @SerialName("conversation_count")
     val conversationCount: Int? = null,
@@ -177,4 +216,8 @@ data class ChatUserContext(
     @SerialName("is_returning_user")
     val isReturningUser: Boolean? = null
 )
+
+/** Backward compatibility alias */
+@Deprecated("Use GreetingUserContext instead", ReplaceWith("GreetingUserContext"))
+typealias ChatUserContext = GreetingUserContext
 

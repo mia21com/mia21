@@ -19,7 +19,7 @@ protocol ChatServiceProtocol {
   func initialize(userId: String, options: InitializeOptions, customerLlmKey: String?) async throws -> InitializeResponse
   func sendMessage(userId: String, message: String, options: ChatOptions, customerLlmKey: String?, currentSpace: String?) async throws -> ChatResponse
   func complete(userId: String, messages: [ChatMessage], options: CompletionOptions) async throws -> CompletionResponse
-  func initializeChat(userId: String, options: ChatInitializeOptions) async throws -> ChatInitializeResponse
+  func generateGreeting(userId: String, options: GreetingOptions) async throws -> GreetingResponse
   func close(userId: String, spaceId: String?) async throws
 }
 
@@ -158,7 +158,7 @@ final class ChatService: ChatServiceProtocol {
   func complete(userId: String, messages: [ChatMessage], options: CompletionOptions) async throws -> CompletionResponse {
     logInfo("Sending completion request with \(messages.count) messages")
     
-    // Build OpenAI-compatible messages array
+    // Build OpenAI-compatible messages array (standard OpenAI body format)
     let messagesArray = messages.map { msg -> [String: String] in
       return ["role": msg.role.rawValue, "content": msg.content]
     }
@@ -166,7 +166,7 @@ final class ChatService: ChatServiceProtocol {
     var body: [String: Any] = [
       "model": options.model,
       "messages": messagesArray,
-      "stream": false
+      "stream": options.stream
     ]
     
     if let temperature = options.temperature {
@@ -176,55 +176,63 @@ final class ChatService: ChatServiceProtocol {
       body["max_tokens"] = maxTokens
     }
     
-    // Build headers for OpenAI-compatible endpoint
-    var headers: [String: String] = [
-      "X-User-Id": userId
-    ]
+    // Build Mia21 extension headers
+    var headers: [String: String] = [:]
+    
+    // User ID for memory isolation
+    headers["X-User-Id"] = userId
+    
     if let spaceId = options.spaceId {
       headers["X-Space-Id"] = spaceId
     }
-    if let botId = options.botId {
-      headers["X-Bot-Id"] = botId
+    if let agentId = options.agentId {
+      headers["X-Agent-Id"] = agentId
+    }
+    if let voiceEnabled = options.voiceEnabled {
+      headers["X-Voice-Enabled"] = voiceEnabled ? "true" : "false"
+    }
+    if let voiceId = options.voiceId {
+      headers["X-Voice-Id"] = voiceId
+    }
+    if let incognito = options.incognito {
+      headers["X-Incognito"] = incognito ? "true" : "false"
     }
     
     let endpoint = APIEndpoint(path: "/v1/chat/completions", method: .post, body: body, headers: headers)
     return try await apiClient.performRequest(endpoint)
   }
   
-  // MARK: - OpenAI-Compatible Chat Initialize
+  // MARK: - OpenAI-Compatible Greeting Generation
   
-  func initializeChat(userId: String, options: ChatInitializeOptions) async throws -> ChatInitializeResponse {
-    logInfo("Initializing chat with personalized greeting for user: \(userId)")
+  func generateGreeting(userId: String, options: GreetingOptions) async throws -> GreetingResponse {
+    logInfo("Generating personalized greeting for user: \(userId)")
     
-    var body: [String: Any] = [
-      "model": options.model
-    ]
+    // All parameters are passed via headers (no request body)
+    var headers: [String: String] = [:]
     
-    if let language = options.language {
-      body["language"] = language
-    }
-    if let userName = options.userName {
-      body["user_name"] = userName
-    }
-    if let timezone = options.timezone {
-      body["timezone"] = timezone
-    }
+    // Optional user ID for memory context
+    headers["X-User-Id"] = userId
     
-    // Build headers for OpenAI-compatible endpoint
-    var headers: [String: String] = [
-      "X-User-Id": userId
-    ]
     if let spaceId = options.spaceId {
       headers["X-Space-Id"] = spaceId
     }
-    if let botId = options.botId {
-      headers["X-Bot-Id"] = botId
+    if let agentId = options.agentId {
+      headers["X-Agent-Id"] = agentId
+    }
+    if let voiceEnabled = options.voiceEnabled {
+      headers["X-Voice-Enabled"] = voiceEnabled ? "true" : "false"
+    }
+    if let voiceId = options.voiceId {
+      headers["X-Voice-Id"] = voiceId
+    }
+    if let incognito = options.incognito {
+      headers["X-Incognito"] = incognito ? "true" : "false"
     }
     
-    let endpoint = APIEndpoint(path: "/v1/chat/initialize", method: .post, body: body, headers: headers)
-    let response: ChatInitializeResponse = try await apiClient.performRequest(endpoint)
+    let endpoint = APIEndpoint(path: "/v1/chat/initialize", method: .post, body: nil, headers: headers)
+    let response: GreetingResponse = try await apiClient.performRequest(endpoint)
     
-    logInfo("Chat initialized with personalized greeting")
+    logInfo("Generated personalized greeting")
     logDebug("Greeting: \(response.greeting ?? "none")")
     
     return response

@@ -26,7 +26,7 @@ interface ChatServiceProtocol {
     suspend fun initialize(userId: String, options: InitializeOptions, customerLlmKey: String?): InitializeResponse
     suspend fun sendMessage(userId: String, message: String, options: ChatOptions, customerLlmKey: String?, currentSpace: String?): ChatResponse
     suspend fun complete(userId: String, messages: List<ChatMessage>, options: CompletionOptions): CompletionResponse
-    suspend fun initializeChat(userId: String, options: ChatInitializeOptions): ChatInitializeResponse
+    suspend fun generateGreeting(userId: String, options: GreetingOptions): GreetingResponse
     suspend fun close(userId: String, spaceId: String?)
 }
 
@@ -130,7 +130,8 @@ class ChatService(private val apiClient: APIClient) : ChatServiceProtocol {
     
     /**
      * Send a completion request using the OpenAI-compatible endpoint.
-     * No bot/space pre-configuration required - include system message in the messages list.
+     * Fully compatible with OpenAI's API - standard OpenAI SDKs work by just changing base_url.
+     * Mia21 extensions are passed via HTTP headers.
      */
     override suspend fun complete(
         userId: String,
@@ -139,7 +140,7 @@ class ChatService(private val apiClient: APIClient) : ChatServiceProtocol {
     ): CompletionResponse {
         Logger.debug("Sending completion request with ${messages.size} messages")
         
-        // Build OpenAI-compatible messages array
+        // Build OpenAI-compatible messages array (standard OpenAI body format)
         val messagesList = messages.map { msg ->
             mapOf("role" to msg.role.name.lowercase(), "content" to msg.content)
         }
@@ -147,16 +148,23 @@ class ChatService(private val apiClient: APIClient) : ChatServiceProtocol {
         val body = mutableMapOf<String, Any?>(
             "model" to options.model,
             "messages" to messagesList,
-            "stream" to false
+            "stream" to options.stream
         )
         
         options.temperature?.let { body["temperature"] = it }
         options.maxTokens?.let { body["max_tokens"] = it }
         
-        // Build headers for OpenAI-compatible endpoint
-        val headers = mutableMapOf("X-User-Id" to userId)
+        // Build Mia21 extension headers
+        val headers = mutableMapOf<String, String>()
+        
+        // User ID for memory isolation
+        headers["X-User-Id"] = userId
+        
         options.spaceId?.let { headers["X-Space-Id"] = it }
-        options.botId?.let { headers["X-Bot-Id"] = it }
+        options.agentId?.let { headers["X-Agent-Id"] = it }
+        options.voiceEnabled?.let { headers["X-Voice-Enabled"] = if (it) "true" else "false" }
+        options.voiceId?.let { headers["X-Voice-Id"] = it }
+        options.incognito?.let { headers["X-Incognito"] = if (it) "true" else "false" }
         
         val endpoint = APIEndpoint(
             path = "/v1/chat/completions",
@@ -170,39 +178,39 @@ class ChatService(private val apiClient: APIClient) : ChatServiceProtocol {
     }
     
     /**
-     * Generate a personalized greeting based on user's conversation history.
+     * Generate a personalized greeting based on user's conversation history and memories.
      * Uses the OpenAI-compatible /v1/chat/initialize endpoint.
+     * All parameters are passed via headers (no request body).
      */
-    override suspend fun initializeChat(
+    override suspend fun generateGreeting(
         userId: String,
-        options: ChatInitializeOptions
-    ): ChatInitializeResponse {
-        Logger.debug("Initializing chat with personalized greeting for user: $userId")
+        options: GreetingOptions
+    ): GreetingResponse {
+        Logger.debug("Generating personalized greeting for user: $userId")
         
-        val body = mutableMapOf<String, Any?>(
-            "model" to options.model
-        )
+        // All parameters are passed via headers (no request body)
+        val headers = mutableMapOf<String, String>()
         
-        options.language?.let { body["language"] = it }
-        options.userName?.let { body["user_name"] = it }
-        options.timezone?.let { body["timezone"] = it }
+        // Optional user ID for memory context
+        headers["X-User-Id"] = userId
         
-        // Build headers for OpenAI-compatible endpoint
-        val headers = mutableMapOf("X-User-Id" to userId)
         options.spaceId?.let { headers["X-Space-Id"] = it }
-        options.botId?.let { headers["X-Bot-Id"] = it }
+        options.agentId?.let { headers["X-Agent-Id"] = it }
+        options.voiceEnabled?.let { headers["X-Voice-Enabled"] = if (it) "true" else "false" }
+        options.voiceId?.let { headers["X-Voice-Id"] = it }
+        options.incognito?.let { headers["X-Incognito"] = if (it) "true" else "false" }
         
         val endpoint = APIEndpoint(
             path = "/v1/chat/initialize",
             method = HTTPMethod.POST,
-            body = body,
+            body = null,
             headers = headers
         )
         
         val jsonResponse = apiClient.performRequest(endpoint, String::class.java)
-        val response = apiClient.json.decodeFromString<ChatInitializeResponse>(jsonResponse)
+        val response = apiClient.json.decodeFromString<GreetingResponse>(jsonResponse)
         
-        Logger.debug("Chat initialized with personalized greeting: ${response.greeting}")
+        Logger.debug("Generated personalized greeting: ${response.greeting}")
         return response
     }
 }

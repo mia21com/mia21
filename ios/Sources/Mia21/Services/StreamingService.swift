@@ -159,7 +159,7 @@ final class StreamingService: StreamingServiceProtocol {
   ) async throws {
     logInfo("Starting streaming completion with \(messages.count) messages")
     
-    // Build OpenAI-compatible messages array
+    // Build OpenAI-compatible messages array (standard OpenAI body format)
     let messagesArray = messages.map { msg -> [String: String] in
       return ["role": msg.role.rawValue, "content": msg.content]
     }
@@ -177,15 +177,26 @@ final class StreamingService: StreamingServiceProtocol {
       body["max_tokens"] = maxTokens
     }
     
-    // Build headers for OpenAI-compatible endpoint
-    var headers: [String: String] = [
-      "X-User-Id": userId
-    ]
+    // Build Mia21 extension headers
+    var headers: [String: String] = [:]
+    
+    // User ID for memory isolation
+    headers["X-User-Id"] = userId
+    
     if let spaceId = options.spaceId {
       headers["X-Space-Id"] = spaceId
     }
-    if let botId = options.botId {
-      headers["X-Bot-Id"] = botId
+    if let agentId = options.agentId {
+      headers["X-Agent-Id"] = agentId
+    }
+    if let voiceEnabled = options.voiceEnabled {
+      headers["X-Voice-Enabled"] = voiceEnabled ? "true" : "false"
+    }
+    if let voiceId = options.voiceId {
+      headers["X-Voice-Id"] = voiceId
+    }
+    if let incognito = options.incognito {
+      headers["X-Incognito"] = incognito ? "true" : "false"
     }
     
     let endpoint = APIEndpoint(path: "/v1/chat/completions", method: .post, body: body, headers: headers)

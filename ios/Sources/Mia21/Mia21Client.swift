@@ -225,18 +225,30 @@ public final class Mia21Client {
     )
   }
   
-  /// Generate a personalized greeting based on the user's conversation history.
+  /// Generate a personalized greeting based on the user's conversation history and memories.
   /// Perfect for chat initialization screens. Uses the OpenAI-compatible `/v1/chat/initialize` endpoint.
-  /// - Parameter options: Configuration options for initialization
-  /// - Returns: ChatInitializeResponse containing personalized greeting and user context
+  /// 
+  /// The greeting will reference past conversations if available, creating a more engaging
+  /// user experience like "Hello again! Last time we discussed..."
+  ///
+  /// - Parameter options: Configuration options (all passed via HTTP headers)
+  /// - Returns: GreetingResponse containing personalized greeting and optional audio
   /// - Throws: Mia21Error if the request fails
-  public func initializeChat(
-    options: ChatInitializeOptions = ChatInitializeOptions()
-  ) async throws -> ChatInitializeResponse {
-    return try await chatService.initializeChat(
+  public func generateGreeting(
+    options: GreetingOptions = GreetingOptions()
+  ) async throws -> GreetingResponse {
+    return try await chatService.generateGreeting(
       userId: userId,
       options: options
     )
+  }
+  
+  /// Backward compatibility alias for generateGreeting
+  @available(*, deprecated, renamed: "generateGreeting")
+  public func initializeChat(
+    options: GreetingOptions = GreetingOptions()
+  ) async throws -> GreetingResponse {
+    return try await generateGreeting(options: options)
   }
 
   // MARK: - Streaming Operations
