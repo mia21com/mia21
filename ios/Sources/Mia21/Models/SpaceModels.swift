@@ -129,12 +129,16 @@ public struct SpaceConversation: Codable {
   public let botId: String?
   /// Conversation title
   public let title: String?
+  /// User's timezone
+  public let timezone: String?
   /// Conversation status
   public let status: String
   /// Creation timestamp
   public let createdAt: String
   /// Last update timestamp
   public let updatedAt: String
+  /// Timestamp when conversation was closed
+  public let closedAt: String?
   /// Number of messages in the conversation
   public let messageCount: Int
 }

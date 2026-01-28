@@ -268,7 +268,7 @@ public typealias ChatInitializeOptions = GreetingOptions
 public struct GreetingResponse: Codable {
   /// Unique identifier for the request
   public let id: String?
-  /// Object type (e.g., "chat.initialize")
+  /// Object type (e.g., "chat.initialization")
   public let object: String?
   /// Unix timestamp of creation
   public let created: Int?
@@ -276,7 +276,13 @@ public struct GreetingResponse: Codable {
   public let model: String?
   /// Personalized greeting message based on conversation history
   public let greeting: String?
-  /// Context about the user derived from history
+  /// Whether the user has memory/history
+  public let hasMemory: Bool?
+  /// Number of memories for this user
+  public let memoryCount: Int?
+  /// Conversation ID for continuing this conversation
+  public let conversationId: String?
+  /// Context about the user derived from history (legacy)
   public let userContext: GreetingUserContext?
   /// Audio data if voice was enabled (base64 encoded)
   public let audio: String?

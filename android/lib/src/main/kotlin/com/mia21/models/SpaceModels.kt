@@ -121,6 +121,8 @@ data class SpaceConversation(
     val botId: String? = null,
     /** Conversation title */
     val title: String? = null,
+    /** User's timezone */
+    val timezone: String? = null,
     /** Conversation status */
     val status: String,
     /** Creation timestamp */
@@ -129,6 +131,9 @@ data class SpaceConversation(
     /** Last update timestamp */
     @SerialName("updated_at")
     val updatedAt: String,
+    /** Timestamp when conversation was closed */
+    @SerialName("closed_at")
+    val closedAt: String? = null,
     /** Number of messages in the conversation */
     @SerialName("message_count")
     val messageCount: Int

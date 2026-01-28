@@ -200,7 +200,7 @@ typealias ChatInitializeOptions = GreetingOptions
 data class GreetingResponse(
     /** Unique identifier for the request */
     val id: String? = null,
-    /** Object type (e.g., "chat.initialize") */
+    /** Object type (e.g., "chat.initialization") */
     val `object`: String? = null,
     /** Unix timestamp of creation */
     val created: Int? = null,
@@ -208,7 +208,16 @@ data class GreetingResponse(
     val model: String? = null,
     /** Personalized greeting message based on conversation history */
     val greeting: String? = null,
-    /** Context about the user derived from history */
+    /** Whether the user has memory/history */
+    @SerialName("has_memory")
+    val hasMemory: Boolean? = null,
+    /** Number of memories for this user */
+    @SerialName("memory_count")
+    val memoryCount: Int? = null,
+    /** Conversation ID for continuing this conversation */
+    @SerialName("conversation_id")
+    val conversationId: String? = null,
+    /** Context about the user derived from history (legacy) */
     @SerialName("user_context")
     val userContext: GreetingUserContext? = null,
     /** Audio data if voice was enabled (base64 encoded) */
