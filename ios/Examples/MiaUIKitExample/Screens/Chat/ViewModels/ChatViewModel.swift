@@ -33,6 +33,10 @@ final class ChatViewModel: ObservableObject {
   @Published var isTranscribing: Bool = false
   @Published var recordingStatusText: String = ""
   @Published var textFieldPlaceholder: String = "Message"
+  
+  /// When true, uses OpenAI-compatible endpoints (/v1/chat/initialize, /v1/chat/completions)
+  /// When false, uses standard Mia21 endpoints (/initialize_chat, /chat)
+  @Published var useOpenAICompatibleMode: Bool = false
 
   private let client: Mia21Client
   private let audioManager: AudioPlaybackManager
@@ -107,22 +111,48 @@ final class ChatViewModel: ObservableObject {
     currentSessionId = sessionId
     
     do {
-      let response = try await client.initialize(
-        options: InitializeOptions(
-          spaceId: currentSpaceId,
-          botId: currentBotId,
-          timezone: TimeZone.current.identifier,  // Pass device timezone
-          generateFirstMessage: true
-        )
-      )
-      
-      guard sessionId == currentSessionId else { return }
-      
       currentConversationId = nil
-
-      if let welcomeMessage = response.message {
-        addMessage(text: welcomeMessage, isUser: false)
-        conversationHistory.append(Mia21.ChatMessage(role: .assistant, content: welcomeMessage))
+      
+      if useOpenAICompatibleMode {
+        // Use OpenAI-compatible /v1/chat/initialize endpoint (headers only)
+        let response = try await client.openAIInitializeChat(
+          options: GreetingOptions(
+            spaceId: currentSpaceId,
+            agentId: currentBotId,
+            voiceEnabled: isVoiceEnabled,
+            voiceId: currentVoiceId
+          )
+        )
+        
+        guard sessionId == currentSessionId else { return }
+        
+        if let greeting = response.greeting {
+          addMessage(text: greeting, isUser: false)
+          conversationHistory.append(Mia21.ChatMessage(role: .assistant, content: greeting))
+        }
+        
+        // Log user context if available
+        if let context = response.userContext {
+          print("[OpenAI Mode] User context - Returning: \(context.isReturningUser ?? false), Conversations: \(context.conversationCount ?? 0)")
+        }
+        
+      } else {
+        // Use standard /initialize_chat endpoint
+        let response = try await client.initialize(
+          options: InitializeOptions(
+            spaceId: currentSpaceId,
+            botId: currentBotId,
+            timezone: TimeZone.current.identifier,
+            generateFirstMessage: true
+          )
+        )
+        
+        guard sessionId == currentSessionId else { return }
+        
+        if let welcomeMessage = response.message {
+          addMessage(text: welcomeMessage, isUser: false)
+          conversationHistory.append(Mia21.ChatMessage(role: .assistant, content: welcomeMessage))
+        }
       }
       
       isChatInitialized = true
@@ -189,7 +219,14 @@ final class ChatViewModel: ObservableObject {
       onScrollToBottom?()
       audioManager.reset()
 
-      if isVoiceEnabled {
+      if useOpenAICompatibleMode {
+        // Use OpenAI-compatible endpoints
+        if isVoiceEnabled {
+          try await sendMessageOpenAICompatibleWithVoice(text, typingIndicatorIndex: typingIndicatorIndex)
+        } else {
+          try await sendMessageOpenAICompatible(text, typingIndicatorIndex: typingIndicatorIndex)
+        }
+      } else if isVoiceEnabled {
         try await sendMessageWithVoice(text, typingIndicatorIndex: typingIndicatorIndex)
       } else {
         try await sendMessageTextOnly(text, typingIndicatorIndex: typingIndicatorIndex)
@@ -290,6 +327,255 @@ final class ChatViewModel: ObservableObject {
 
   func getChatTitle() -> String {
     return messages.first(where: { $0.isUser })?.text ?? "New Chat"
+  }
+  
+  // MARK: - OpenAI-Compatible Streaming
+  
+  private func sendMessageOpenAICompatible(_ text: String, typingIndicatorIndex: Int) async throws {
+    var aiResponse = ""
+    var displayedText = ""
+    var isFirstChunk = true
+    var animationTask: Task<Void, Never>?
+    var streamComplete = false
+    let collapseDoubleNewlines = false
+    
+    // Build messages with system prompt for OpenAI-compatible endpoint
+    var openAIMessages: [Mia21.ChatMessage] = [
+      Mia21.ChatMessage(role: .system, content: "You are a helpful AI assistant. Be concise and friendly.")
+    ]
+    openAIMessages.append(contentsOf: conversationHistory)
+    
+    let options = CompletionOptions(
+      model: "gpt-4o",
+      temperature: 0.7,
+      spaceId: currentSpaceId,
+      agentId: currentBotId
+    )
+    
+    print("[OpenAI Mode] Streaming with \(openAIMessages.count) messages via /v1/chat/completions")
+    
+    try await client.openAIStreamComplete(messages: openAIMessages, options: options) { [weak self] chunk in
+      Task { @MainActor [weak self] in
+        guard let self = self else { return }
+        
+        if isFirstChunk {
+          isFirstChunk = false
+          aiResponse = chunk
+        } else {
+          aiResponse += chunk
+        }
+        
+        if animationTask == nil && typingIndicatorIndex < self.messages.count {
+          animationTask = Task { @MainActor [weak self] in
+            guard let self = self else { return }
+            
+            while !Task.isCancelled {
+              if displayedText.count < aiResponse.count {
+                let nextIndex = displayedText.endIndex
+                if nextIndex < aiResponse.endIndex {
+                  let nextChar = String(aiResponse[nextIndex])
+                  displayedText += nextChar
+                  
+                  if typingIndicatorIndex < self.messages.count {
+                    self.messages[typingIndicatorIndex] = ChatMessage(
+                      text: displayedText,
+                      isUser: false,
+                      timestamp: Date(),
+                      isTypingIndicator: false,
+                      isStreaming: true,
+                      collapseDoubleNewlines: collapseDoubleNewlines
+                    )
+                    self.onMessagesUpdated?()
+                  }
+                  
+                  try? await Task.sleep(nanoseconds: UInt64(self.chunkDelay * 1_000_000_000))
+                } else {
+                  try? await Task.sleep(nanoseconds: UInt64(self.chunkDelay * 1_000_000_000))
+                }
+              } else {
+                if streamComplete {
+                  break
+                }
+                try? await Task.sleep(nanoseconds: UInt64(self.chunkDelay * 1_000_000_000))
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    streamComplete = true
+    
+    var finalText = aiResponse
+    if let regex = try? NSRegularExpression(pattern: "\\n{3,}", options: []) {
+      finalText = regex.stringByReplacingMatches(in: finalText, options: [], range: NSRange(location: 0, length: finalText.utf16.count), withTemplate: "\n\n")
+    }
+    
+    while displayedText.count < aiResponse.count {
+      try? await Task.sleep(nanoseconds: 100_000_000)
+    }
+    
+    try? await Task.sleep(nanoseconds: 200_000_000)
+    animationTask?.cancel()
+    
+    if typingIndicatorIndex < messages.count {
+      messages[typingIndicatorIndex] = ChatMessage(
+        text: finalText,
+        isUser: false,
+        timestamp: Date(),
+        isTypingIndicator: false,
+        isStreaming: false,
+        collapseDoubleNewlines: collapseDoubleNewlines
+      )
+      conversationHistory.append(Mia21.ChatMessage(role: .assistant, content: finalText))
+      onMessagesUpdated?()
+    }
+    
+    print("[OpenAI Mode] Completed streaming response")
+  }
+  
+  private func sendMessageOpenAICompatibleWithVoice(_ text: String, typingIndicatorIndex: Int) async throws {
+    var aiResponse = ""
+    var displayedText = ""
+    var isFirstChunk = true
+    var animationTask: Task<Void, Never>?
+    var streamComplete = false
+    let collapseDoubleNewlines = false
+    
+    // Build messages with system prompt for OpenAI-compatible style
+    var openAIMessages: [Mia21.ChatMessage] = [
+      Mia21.ChatMessage(role: .system, content: "You are a helpful AI assistant. Be concise and friendly.")
+    ]
+    openAIMessages.append(contentsOf: conversationHistory)
+    
+    let voiceConfig = VoiceConfig(
+      enabled: true,
+      voiceId: currentVoiceId ?? "21m00Tcm4TlvDq8ikWAM",
+      elevenlabsApiKey: nil,
+      stability: 0.5,
+      similarityBoost: 0.75
+    )
+    
+    let options = ChatOptions(
+      spaceId: currentSpaceId,
+      botId: currentBotId,
+      conversationId: currentConversationId,
+      voiceId: currentVoiceId
+    )
+    
+    print("[OpenAI Mode + Voice] Streaming with \(openAIMessages.count) messages")
+    
+    audioManager.onFirstAudioStart = { [weak self] in
+      guard let self = self else { return }
+      
+      if typingIndicatorIndex < self.messages.count {
+        self.messages[typingIndicatorIndex] = ChatMessage(
+          text: "",
+          isUser: false,
+          timestamp: Date(),
+          isTypingIndicator: false,
+          isStreaming: false
+        )
+        self.onMessagesUpdated?()
+      }
+      
+      if animationTask == nil {
+        animationTask = Task { @MainActor [weak self] in
+          guard let self = self else { return }
+          
+          while !Task.isCancelled {
+            if displayedText.count < aiResponse.count {
+              let nextIndex = displayedText.endIndex
+              if nextIndex < aiResponse.endIndex {
+                let nextChar = String(aiResponse[nextIndex])
+                displayedText += nextChar
+                
+                if typingIndicatorIndex < self.messages.count {
+                  self.messages[typingIndicatorIndex] = ChatMessage(
+                    text: displayedText,
+                    isUser: false,
+                    timestamp: Date(),
+                    isTypingIndicator: false,
+                    isStreaming: true,
+                    collapseDoubleNewlines: collapseDoubleNewlines
+                  )
+                  self.onMessagesUpdated?()
+                }
+                
+                try? await Task.sleep(nanoseconds: UInt64(self.chunkDelay * 1_000_000_000))
+              } else {
+                try? await Task.sleep(nanoseconds: UInt64(self.chunkDelay * 1_000_000_000))
+              }
+            } else {
+              if streamComplete {
+                break
+              }
+              try? await Task.sleep(nanoseconds: UInt64(self.chunkDelay * 1_000_000_000))
+            }
+          }
+        }
+      }
+    }
+    
+    // Use streamChatWithVoice with OpenAI-style messages (includes system prompt)
+    try await client.streamChatWithVoice(
+      messages: openAIMessages,
+      options: options,
+      voiceConfig: voiceConfig
+    ) { [weak self] event in
+      Task { @MainActor [weak self] in
+        guard let self = self else { return }
+        
+        switch event {
+        case .text(let chunk):
+          if isFirstChunk {
+            isFirstChunk = false
+            aiResponse = chunk
+          } else {
+            aiResponse += chunk
+          }
+          
+        case .audio(let audioData):
+          self.audioManager.queueAudioChunk(audioData)
+          
+        case .done:
+          streamComplete = true
+          
+          var finalText = aiResponse
+          if let regex = try? NSRegularExpression(pattern: "\\n{3,}", options: []) {
+            finalText = regex.stringByReplacingMatches(in: finalText, options: [], range: NSRange(location: 0, length: finalText.utf16.count), withTemplate: "\n\n")
+          }
+          
+          while displayedText.count < aiResponse.count {
+            try? await Task.sleep(nanoseconds: 100_000_000)
+          }
+          
+          try? await Task.sleep(nanoseconds: 200_000_000)
+          animationTask?.cancel()
+          
+          if typingIndicatorIndex < self.messages.count {
+            self.messages[typingIndicatorIndex] = ChatMessage(
+              text: finalText,
+              isUser: false,
+              timestamp: Date(),
+              isTypingIndicator: false,
+              isStreaming: false,
+              collapseDoubleNewlines: collapseDoubleNewlines
+            )
+            self.conversationHistory.append(Mia21.ChatMessage(role: .assistant, content: finalText))
+            self.onMessagesUpdated?()
+          }
+          
+          print("[OpenAI Mode + Voice] Completed streaming response")
+          
+        case .error(let error):
+          throw Mia21Error.streamingError(error.localizedDescription)
+          
+        default:
+          break
+        }
+      }
+    }
   }
 
   private func sendMessageTextOnly(_ text: String, typingIndicatorIndex: Int) async throws {
