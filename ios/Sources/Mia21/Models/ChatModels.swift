@@ -108,6 +108,16 @@ public struct CompletionOptions {
   public var voiceId: String?
   /// Disable memory - no history used or saved (X-Incognito header, default: false)
   public var incognito: Bool?
+  /// Customer's own LLM API key for BYOK (X-LLM-API-Key header)
+  public var llmApiKey: String?
+  /// User's timezone for context (X-Timezone header, e.g., "America/New_York")
+  public var timezone: String?
+  /// User's name for personalization (X-User-Name header)
+  public var userName: String?
+  /// Specific conversation ID (X-Conversation-Id header)
+  public var conversationId: String?
+  /// Custom metadata as JSON string (X-Meta header)
+  public var meta: String?
   
   public init(
     model: String = "gpt-4o",
@@ -118,7 +128,12 @@ public struct CompletionOptions {
     agentId: String? = nil,
     voiceEnabled: Bool? = nil,
     voiceId: String? = nil,
-    incognito: Bool? = nil
+    incognito: Bool? = nil,
+    llmApiKey: String? = nil,
+    timezone: String? = nil,
+    userName: String? = nil,
+    conversationId: String? = nil,
+    meta: String? = nil
   ) {
     self.model = model
     self.temperature = temperature
@@ -129,6 +144,11 @@ public struct CompletionOptions {
     self.voiceEnabled = voiceEnabled
     self.voiceId = voiceId
     self.incognito = incognito
+    self.llmApiKey = llmApiKey
+    self.timezone = timezone
+    self.userName = userName
+    self.conversationId = conversationId
+    self.meta = meta
   }
   
   /// Backward compatibility initializer with botId
@@ -150,6 +170,11 @@ public struct CompletionOptions {
     self.voiceEnabled = nil
     self.voiceId = nil
     self.incognito = nil
+    self.llmApiKey = nil
+    self.timezone = nil
+    self.userName = nil
+    self.conversationId = nil
+    self.meta = nil
   }
 }
 
@@ -199,19 +224,39 @@ public struct GreetingOptions {
   public var voiceId: String?
   /// If true, no memory is used or saved (X-Incognito header)
   public var incognito: Bool?
+  /// Customer's own LLM API key for BYOK (X-LLM-API-Key header)
+  public var llmApiKey: String?
+  /// User's timezone for time-aware greetings (X-Timezone header, e.g., "America/New_York")
+  public var timezone: String?
+  /// User's name for personalized greetings (X-User-Name header)
+  public var userName: String?
+  /// Specific conversation ID to continue (X-Conversation-Id header)
+  public var conversationId: String?
+  /// Custom metadata as JSON string (X-Meta header)
+  public var meta: String?
   
   public init(
     spaceId: String? = nil,
     agentId: String? = nil,
     voiceEnabled: Bool? = nil,
     voiceId: String? = nil,
-    incognito: Bool? = nil
+    incognito: Bool? = nil,
+    llmApiKey: String? = nil,
+    timezone: String? = nil,
+    userName: String? = nil,
+    conversationId: String? = nil,
+    meta: String? = nil
   ) {
     self.spaceId = spaceId
     self.agentId = agentId
     self.voiceEnabled = voiceEnabled
     self.voiceId = voiceId
     self.incognito = incognito
+    self.llmApiKey = llmApiKey
+    self.timezone = timezone
+    self.userName = userName
+    self.conversationId = conversationId
+    self.meta = meta
   }
 }
 

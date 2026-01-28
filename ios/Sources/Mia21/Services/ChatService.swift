@@ -197,6 +197,21 @@ final class ChatService: ChatServiceProtocol {
     if let incognito = options.incognito {
       headers["X-Incognito"] = incognito ? "true" : "false"
     }
+    if let llmApiKey = options.llmApiKey {
+      headers["X-LLM-API-Key"] = llmApiKey
+    }
+    if let timezone = options.timezone {
+      headers["X-Timezone"] = timezone
+    }
+    if let userName = options.userName {
+      headers["X-User-Name"] = userName
+    }
+    if let conversationId = options.conversationId {
+      headers["X-Conversation-Id"] = conversationId
+    }
+    if let meta = options.meta {
+      headers["X-Meta"] = meta
+    }
     
     let endpoint = APIEndpoint(path: "/v1/chat/completions", method: .post, body: body, headers: headers)
     return try await apiClient.performRequest(endpoint)
@@ -210,7 +225,7 @@ final class ChatService: ChatServiceProtocol {
     // All parameters are passed via headers (no request body)
     var headers: [String: String] = [:]
     
-    // Optional user ID for memory context
+    // User ID for memory context
     headers["X-User-Id"] = userId
     
     if let spaceId = options.spaceId {
@@ -227,6 +242,21 @@ final class ChatService: ChatServiceProtocol {
     }
     if let incognito = options.incognito {
       headers["X-Incognito"] = incognito ? "true" : "false"
+    }
+    if let llmApiKey = options.llmApiKey {
+      headers["X-LLM-API-Key"] = llmApiKey
+    }
+    if let timezone = options.timezone {
+      headers["X-Timezone"] = timezone
+    }
+    if let userName = options.userName {
+      headers["X-User-Name"] = userName
+    }
+    if let conversationId = options.conversationId {
+      headers["X-Conversation-Id"] = conversationId
+    }
+    if let meta = options.meta {
+      headers["X-Meta"] = meta
     }
     
     let endpoint = APIEndpoint(path: "/v1/chat/initialize", method: .post, body: nil, headers: headers)

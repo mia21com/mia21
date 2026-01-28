@@ -198,6 +198,21 @@ final class StreamingService: StreamingServiceProtocol {
     if let incognito = options.incognito {
       headers["X-Incognito"] = incognito ? "true" : "false"
     }
+    if let llmApiKey = options.llmApiKey {
+      headers["X-LLM-API-Key"] = llmApiKey
+    }
+    if let timezone = options.timezone {
+      headers["X-Timezone"] = timezone
+    }
+    if let userName = options.userName {
+      headers["X-User-Name"] = userName
+    }
+    if let conversationId = options.conversationId {
+      headers["X-Conversation-Id"] = conversationId
+    }
+    if let meta = options.meta {
+      headers["X-Meta"] = meta
+    }
     
     let endpoint = APIEndpoint(path: "/v1/chat/completions", method: .post, body: body, headers: headers)
     let stream = try await apiClient.performStreamRequest(endpoint)

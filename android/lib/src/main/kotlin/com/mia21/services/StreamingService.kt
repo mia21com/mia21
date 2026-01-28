@@ -192,6 +192,11 @@ class StreamingService(private val apiClient: APIClient) {
         options.voiceEnabled?.let { headers["X-Voice-Enabled"] = if (it) "true" else "false" }
         options.voiceId?.let { headers["X-Voice-Id"] = it }
         options.incognito?.let { headers["X-Incognito"] = if (it) "true" else "false" }
+        options.llmApiKey?.let { headers["X-LLM-API-Key"] = it }
+        options.timezone?.let { headers["X-Timezone"] = it }
+        options.userName?.let { headers["X-User-Name"] = it }
+        options.conversationId?.let { headers["X-Conversation-Id"] = it }
+        options.meta?.let { headers["X-Meta"] = it }
         
         val endpoint = APIEndpoint(
             path = "/v1/chat/completions",

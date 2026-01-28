@@ -92,7 +92,17 @@ data class CompletionOptions(
     /** ElevenLabs voice ID for TTS (X-Voice-Id header) */
     val voiceId: String? = null,
     /** Disable memory - no history used or saved (X-Incognito header, default: false) */
-    val incognito: Boolean? = null
+    val incognito: Boolean? = null,
+    /** Customer's own LLM API key for BYOK (X-LLM-API-Key header) */
+    val llmApiKey: String? = null,
+    /** User's timezone for context (X-Timezone header, e.g., "America/New_York") */
+    val timezone: String? = null,
+    /** User's name for personalization (X-User-Name header) */
+    val userName: String? = null,
+    /** Specific conversation ID (X-Conversation-Id header) */
+    val conversationId: String? = null,
+    /** Custom metadata as JSON string (X-Meta header) */
+    val meta: String? = null
 ) {
     /** Backward compatibility constructor with botId */
     @Deprecated("Use agentId instead of botId", ReplaceWith("CompletionOptions(model, temperature, maxTokens, stream, spaceId, agentId = botId)"))
@@ -166,7 +176,17 @@ data class GreetingOptions(
     /** Voice ID for TTS (X-Voice-Id header) */
     val voiceId: String? = null,
     /** If true, no memory is used or saved (X-Incognito header) */
-    val incognito: Boolean? = null
+    val incognito: Boolean? = null,
+    /** Customer's own LLM API key for BYOK (X-LLM-API-Key header) */
+    val llmApiKey: String? = null,
+    /** User's timezone for time-aware greetings (X-Timezone header, e.g., "America/New_York") */
+    val timezone: String? = null,
+    /** User's name for personalized greetings (X-User-Name header) */
+    val userName: String? = null,
+    /** Specific conversation ID to continue (X-Conversation-Id header) */
+    val conversationId: String? = null,
+    /** Custom metadata as JSON string (X-Meta header) */
+    val meta: String? = null
 )
 
 /** Backward compatibility alias */
