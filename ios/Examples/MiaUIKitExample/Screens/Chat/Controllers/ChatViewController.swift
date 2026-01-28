@@ -252,16 +252,7 @@ private extension ChatViewController {
     )
     voiceButton.tintColor = .systemGray
     
-    // OpenAI-compatible mode toggle button
-    let openAIModeButton = UIBarButtonItem(
-      image: UIImage(systemName: "brain"),
-      style: .plain,
-      target: self,
-      action: #selector(openAIModeButtonTapped)
-    )
-    openAIModeButton.tintColor = .systemGray
-    
-    navigationItem.rightBarButtonItems = [voiceButton, openAIModeButton]
+    navigationItem.rightBarButtonItems = [voiceButton]
   }
 
   func setupKeyboardObservers() {
@@ -413,30 +404,6 @@ private extension ChatViewController {
     let generator = UIImpactFeedbackGenerator(style: .medium)
     generator.impactOccurred()
   }
-  
-  @objc func openAIModeButtonTapped() {
-    viewModel.useOpenAICompatibleMode.toggle()
-    updateOpenAIModeButtonAppearance()
-    
-    // Re-initialize chat with new mode
-    viewModel.clearChat()
-    
-    let generator = UIImpactFeedbackGenerator(style: .medium)
-    generator.impactOccurred()
-    
-    // Show mode change feedback
-    let modeName = viewModel.useOpenAICompatibleMode ? "OpenAI-Compatible" : "Standard"
-    let alert = UIAlertController(
-      title: "API Mode Changed",
-      message: "Now using \(modeName) endpoints.\n\n" +
-        (viewModel.useOpenAICompatibleMode 
-          ? "• /v1/chat/initialize (greeting)\n• /v1/chat/completions (streaming)\n• Voice streaming supported ✓" 
-          : "• /initialize_chat\n• /chat (streaming)\n• Voice streaming supported ✓"),
-      preferredStyle: .alert
-    )
-    alert.addAction(UIAlertAction(title: "OK", style: .default))
-    present(alert, animated: true)
-  }
 }
 
 // MARK: - Recording Management
@@ -495,27 +462,12 @@ private extension ChatViewController {
     let image = UIImage(systemName: iconName)
     
     UIView.performWithoutAnimation {
-      if let items = navigationItem.rightBarButtonItems, items.count > 0 {
+      if let items = navigationItem.rightBarButtonItems, !items.isEmpty {
         items[0].image = image
         items[0].tintColor = viewModel.isVoiceEnabled ? .systemGreen : .systemGray
         // Disable voice button when hands-free mode is active
         items[0].isEnabled = !viewModel.isHandsFreeModeEnabled
       }
-    }
-  }
-  
-  func updateOpenAIModeButtonAppearance() {
-    UIView.performWithoutAnimation {
-      if let items = navigationItem.rightBarButtonItems, items.count > 1 {
-        items[1].image = UIImage(systemName: viewModel.useOpenAICompatibleMode ? "brain.fill" : "brain")
-        items[1].tintColor = viewModel.useOpenAICompatibleMode ? .systemBlue : .systemGray
-      }
-    }
-    
-    // Update title to show current mode
-    if let titleLabel = navigationItem.titleView as? UILabel {
-      titleLabel.text = viewModel.useOpenAICompatibleMode ? "Mia (OpenAI)" : "Mia"
-      titleLabel.sizeToFit()
     }
   }
 
@@ -587,14 +539,6 @@ private extension ChatViewController {
       .receive(on: DispatchQueue.main)
       .sink { [weak self] isInitialized in
         self?.chatInputView.isChatInitialized = isInitialized
-      }
-      .store(in: &cancellables)
-    
-    // Observe OpenAI-compatible mode changes
-    viewModel.$useOpenAICompatibleMode
-      .receive(on: DispatchQueue.main)
-      .sink { [weak self] _ in
-        self?.updateOpenAIModeButtonAppearance()
       }
       .store(in: &cancellables)
   }

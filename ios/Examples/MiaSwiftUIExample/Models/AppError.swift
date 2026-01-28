@@ -30,5 +30,3 @@ struct AppError: Identifiable, Equatable {
     lhs.id == rhs.id
   }
 }
-
-
