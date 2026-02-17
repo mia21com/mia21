@@ -312,10 +312,37 @@ final class StreamingService: StreamingServiceProtocol {
     let endpoint = APIEndpoint(path: "/v1/chat/completions", method: .post, body: body, headers: headers)
     let stream = try await apiClient.performStreamRequest(endpoint)
     
+    var buffer = ""
+    
     for try await data in stream {
-      if let line = String(data: data, encoding: .utf8) {
-        processOpenAIAudioStreamLine(line, onEvent: onEvent)
+      if let chunk = String(data: data, encoding: .utf8) {
+        logDebug("Raw stream chunk: \(chunk.prefix(100))...")
+        buffer += chunk
+        
+        // Process complete lines from buffer (split by newlines or process whole buffer if it's a complete SSE line)
+        while true {
+          if let newlineIndex = buffer.firstIndex(of: "\n") {
+            let line = String(buffer[..<newlineIndex])
+            buffer = String(buffer[buffer.index(after: newlineIndex)...])
+            
+            if !line.isEmpty {
+              processOpenAIAudioStreamLine(line, onEvent: onEvent)
+            }
+          } else if buffer.hasPrefix("data: ") || buffer.hasPrefix("event: ") {
+            // Buffer contains a complete SSE line without trailing newline
+            processOpenAIAudioStreamLine(buffer, onEvent: onEvent)
+            buffer = ""
+            break
+          } else {
+            break
+          }
+        }
       }
+    }
+    
+    // Process any remaining data in buffer
+    if !buffer.isEmpty {
+      processOpenAIAudioStreamLine(buffer, onEvent: onEvent)
     }
     
     // Send final done event
@@ -324,7 +351,7 @@ final class StreamingService: StreamingServiceProtocol {
   
   /// Process OpenAI streaming line that may contain both text and audio
   private func processOpenAIAudioStreamLine(_ line: String, onEvent: @escaping (StreamEvent) -> Void) {
-    let trimmed = line.trimmingCharacters(in: .whitespaces)
+    let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
     
     // Skip empty lines
     if trimmed.isEmpty {
@@ -332,41 +359,72 @@ final class StreamingService: StreamingServiceProtocol {
     }
     
     // Check for SSE data prefix
-    guard line.hasPrefix("data: ") else {
+    guard trimmed.hasPrefix("data: ") else {
+      logDebug("Skipping non-data line: \(trimmed.prefix(50))")
       return
     }
     
-    let content = String(line.dropFirst(6))
+    let content = String(trimmed.dropFirst(6))
     
     // Check for [DONE] marker
     if content == "[DONE]" {
+      logDebug("Received [DONE] marker")
       return
     }
     
-    // Parse OpenAI streaming format
+    // Parse JSON
     guard let data = content.data(using: .utf8),
-          let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-          let choices = json["choices"] as? [[String: Any]],
-          let firstChoice = choices.first,
-          let delta = firstChoice["delta"] as? [String: Any] else {
+          let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+      logDebug("Failed to parse JSON: \(content.prefix(100))")
       return
     }
+    
+    // Check for Mia21 custom audio format: {"audio": "base64...", "sentence": "...", "format": "...", "sequence": ...}
+    if let audioBase64 = json["audio"] as? String {
+      logDebug("Got Mia21 audio chunk (format: \(json["format"] ?? "unknown"))")
+      if let audioData = Data(base64Encoded: audioBase64) {
+        logDebug("Decoded audio: \(audioData.count) bytes")
+        onEvent(.audio(audioData))
+      } else {
+        logDebug("Failed to decode base64 audio")
+      }
+      return
+    }
+    
+    // OpenAI format: {"choices": [{"delta": {"content": "...", "audio": {...}}}]}
+    guard let choices = json["choices"] as? [[String: Any]],
+          let firstChoice = choices.first else {
+      logDebug("No choices in response: \(json.keys)")
+      return
+    }
+    
+    guard let delta = firstChoice["delta"] as? [String: Any] else {
+      logDebug("No delta in choice: \(firstChoice.keys)")
+      return
+    }
+    
+    logDebug("Delta keys: \(delta.keys)")
     
     // Extract text content
     if let textContent = delta["content"] as? String, !textContent.isEmpty {
+      logDebug("Got text content: \(textContent.prefix(50))")
       onEvent(.text(textContent))
     }
     
     // Extract audio content (OpenAI format: delta.audio.data and delta.audio.transcript)
     if let audioDict = delta["audio"] as? [String: Any] {
+      logDebug("Got audio dict with keys: \(audioDict.keys)")
+      
       // Extract transcript as text
       if let transcript = audioDict["transcript"] as? String, !transcript.isEmpty {
+        logDebug("Got transcript: \(transcript.prefix(50))")
         onEvent(.text(transcript))
       }
       
       // Extract audio data (base64 encoded)
       if let audioBase64 = audioDict["data"] as? String,
          let audioData = Data(base64Encoded: audioBase64) {
+        logDebug("Got audio data: \(audioData.count) bytes")
         onEvent(.audio(audioData))
       }
     }

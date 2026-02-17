@@ -312,6 +312,24 @@ class StreamingService(private val apiClient: APIClient) {
         
         try {
             val json = JSONObject(trimmed)
+            
+            // Check for Mia21 custom audio format: {"audio": "base64...", "sentence": "...", "format": "...", "sequence": ...}
+            if (json.has("audio") && !json.has("choices")) {
+                val audioBase64 = json.optString("audio", "")
+                if (audioBase64.isNotEmpty()) {
+                    Logger.debug("Got Mia21 audio chunk (format: ${json.optString("format", "unknown")})")
+                    try {
+                        val audioData = Base64.decode(audioBase64, Base64.DEFAULT)
+                        Logger.debug("Decoded audio: ${audioData.size} bytes")
+                        onEvent(StreamEvent.Audio(audioData))
+                    } catch (e: IllegalArgumentException) {
+                        Logger.error("Failed to decode Mia21 audio Base64: ${e.message}")
+                    }
+                }
+                return
+            }
+            
+            // OpenAI format: {"choices": [{"delta": {"content": "...", "audio": {...}}}]}
             val choices = json.optJSONArray("choices") ?: return
             if (choices.length() == 0) return
             
@@ -345,8 +363,8 @@ class StreamingService(private val apiClient: APIClient) {
                 }
             }
         } catch (e: Exception) {
-            // Not a valid OpenAI JSON format, skip
-            Logger.debug("Failed to parse OpenAI audio stream data: ${e.message}")
+            // Not a valid JSON format, skip
+            Logger.debug("Failed to parse audio stream data: ${e.message}")
         }
     }
     
