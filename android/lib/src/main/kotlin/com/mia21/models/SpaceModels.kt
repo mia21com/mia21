@@ -101,9 +101,7 @@ data class SpaceConversationsResponse(
     val limit: Int,
     /** Offset used for the query */
     val offset: Int
-)
-
-/**
+)/**
  * A conversation within a space
  */
 @Serializable

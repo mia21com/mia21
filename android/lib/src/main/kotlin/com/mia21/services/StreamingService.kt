@@ -180,6 +180,8 @@ class StreamingService(private val apiClient: APIClient) {
         
         options.temperature?.let { body["temperature"] = it }
         options.maxTokens?.let { body["max_tokens"] = it }
+        options.modalities?.let { body["modalities"] = it }
+        options.audio?.let { body["audio"] = it.toMap() }
         
         // Build Mia21 extension headers
         val headers = mutableMapOf<String, String>()
@@ -249,6 +251,10 @@ class StreamingService(private val apiClient: APIClient) {
         options.temperature?.let { body["temperature"] = it }
         options.maxTokens?.let { body["max_tokens"] = it }
         
+        
+        // Set modalities to include both text and audio for voice streaming
+        body["modalities"] = options.modalities ?: listOf("text", "audio")
+        options.audio?.let { body["audio"] = it.toMap() }
         // Build Mia21 extension headers
         val headers = mutableMapOf<String, String>()
         

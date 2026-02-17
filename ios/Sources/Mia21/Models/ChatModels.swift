@@ -95,6 +95,10 @@ public struct CompletionOptions {
   public var maxTokens: Int?
   /// Whether to stream the response
   public var stream: Bool
+  /// Output modalities - e.g., ["text"] or ["text", "audio"] for voice responses
+  public var modalities: [String]?
+  /// Audio configuration for voice output (required when modalities includes "audio")
+  public var audio: AudioOutputConfig?
   
   // MARK: - Mia21 Extensions (via HTTP headers)
   
@@ -124,6 +128,8 @@ public struct CompletionOptions {
     temperature: Double? = nil,
     maxTokens: Int? = nil,
     stream: Bool = false,
+    modalities: [String]? = nil,
+    audio: AudioOutputConfig? = nil,
     spaceId: String? = nil,
     agentId: String? = nil,
     voiceEnabled: Bool? = nil,
@@ -139,6 +145,8 @@ public struct CompletionOptions {
     self.temperature = temperature
     self.maxTokens = maxTokens
     self.stream = stream
+    self.modalities = modalities
+    self.audio = audio
     self.spaceId = spaceId
     self.agentId = agentId
     self.voiceEnabled = voiceEnabled
@@ -165,6 +173,8 @@ public struct CompletionOptions {
     self.temperature = temperature
     self.maxTokens = maxTokens
     self.stream = stream
+    self.modalities = nil
+    self.audio = nil
     self.spaceId = spaceId
     self.agentId = botId  // Map botId to agentId
     self.voiceEnabled = nil
@@ -175,6 +185,28 @@ public struct CompletionOptions {
     self.userName = nil
     self.conversationId = nil
     self.meta = nil
+  }
+}
+
+/// Audio output configuration for completions with voice
+public struct AudioOutputConfig {
+  /// Voice to use (e.g., "alloy", "echo", "fable", "onyx", "nova", "shimmer" for OpenAI)
+  public var voice: String
+  /// Audio format (e.g., "pcm16", "mp3", "opus", "flac")
+  public var format: String?
+  
+  public init(voice: String, format: String? = nil) {
+    self.voice = voice
+    self.format = format
+  }
+  
+  /// Convert to dictionary for API request
+  func toDictionary() -> [String: Any] {
+    var dict: [String: Any] = ["voice": voice]
+    if let format = format {
+      dict["format"] = format
+    }
+    return dict
   }
 }
 
@@ -200,6 +232,20 @@ public struct CompletionChoice: Codable {
 public struct CompletionMessage: Codable {
   public let role: String?
   public let content: String?
+  /// Audio content when modalities includes "audio"
+  public let audio: CompletionAudio?
+}
+
+/// Audio content in completion response
+public struct CompletionAudio: Codable {
+  /// Unique audio identifier
+  public let id: String?
+  /// Base64 encoded audio data
+  public let data: String?
+  /// Text transcript of the audio
+  public let transcript: String?
+  /// Expiration timestamp
+  public let expiresAt: Int?
 }
 
 public struct CompletionUsage: Codable {

@@ -183,6 +183,12 @@ final class StreamingService: StreamingServiceProtocol {
     if let maxTokens = options.maxTokens {
       body["max_tokens"] = maxTokens
     }
+    if let modalities = options.modalities {
+      body["modalities"] = modalities
+    }
+    if let audio = options.audio {
+      body["audio"] = audio.toDictionary()
+    }
     
     // Build Mia21 extension headers
     var headers: [String: String] = [:]
@@ -257,6 +263,14 @@ final class StreamingService: StreamingServiceProtocol {
     }
     if let maxTokens = options.maxTokens {
       body["max_tokens"] = maxTokens
+    }
+    
+    // Set modalities to include both text and audio for voice streaming
+    body["modalities"] = options.modalities ?? ["text", "audio"]
+    
+    // Include audio config if provided
+    if let audio = options.audio {
+      body["audio"] = audio.toDictionary()
     }
     
     // Build Mia21 extension headers

@@ -120,9 +120,7 @@ data class RenameConversationResponse(
     @SerialName("conversation_id")
     val conversationId: String,
     val title: String? = null
-)
-
-/**
+)/**
  * Response from deleting all user data (GDPR compliance)
  * ⚠️ This permanently deletes all conversations, messages, memories, and RAG/vector data
  */

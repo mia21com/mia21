@@ -80,6 +80,10 @@ data class CompletionOptions(
     val maxTokens: Int? = null,
     /** Whether to stream the response */
     val stream: Boolean = false,
+    /** Output modalities - e.g., ["text"] or ["text", "audio"] for voice responses */
+    val modalities: List<String>? = null,
+    /** Audio configuration for voice output (required when modalities includes "audio") */
+    val audio: AudioOutputConfig? = null,
     
     // Mia21 Extensions (via HTTP headers)
     
@@ -124,6 +128,23 @@ data class CompletionOptions(
 }
 
 /**
+
+/**
+ * Audio output configuration for completions with voice
+ */
+data class AudioOutputConfig(
+    /** Voice to use (e.g., "alloy", "echo", "fable", "onyx", "nova", "shimmer" for OpenAI) */
+    val voice: String,
+    /** Audio format (e.g., "pcm16", "mp3", "opus", "flac") */
+    val format: String? = null
+) {
+    /** Convert to map for API request */
+    fun toMap(): Map<String, Any> {
+        val map = mutableMapOf<String, Any>("voice" to voice)
+        format?.let { map["format"] = it }
+        return map
+    }
+}
  * Response from OpenAI-compatible /v1/chat/completions endpoint
  */
 @Serializable
@@ -149,6 +170,25 @@ data class CompletionChoice(
 data class CompletionMessage(
     val role: String? = null,
     val content: String? = null
+,
+    /** Audio content when modalities includes "audio" */
+    val audio: CompletionAudio? = null
+)
+
+/**
+ * Audio content in completion response
+ */
+@Serializable
+data class CompletionAudio(
+    /** Unique audio identifier */
+    val id: String? = null,
+    /** Base64 encoded audio data */
+    val data: String? = null,
+    /** Text transcript of the audio */
+    val transcript: String? = null,
+    /** Expiration timestamp */
+    @SerialName("expires_at")
+    val expiresAt: Int? = null
 )
 
 @Serializable

@@ -153,6 +153,8 @@ class ChatService(private val apiClient: APIClient) : ChatServiceProtocol {
         
         options.temperature?.let { body["temperature"] = it }
         options.maxTokens?.let { body["max_tokens"] = it }
+        options.modalities?.let { body["modalities"] = it }
+        options.audio?.let { body["audio"] = it.toMap() }
         
         // Build Mia21 extension headers
         val headers = mutableMapOf<String, String>()
