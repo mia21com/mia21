@@ -312,18 +312,64 @@ final class StreamingService: StreamingServiceProtocol {
     let endpoint = APIEndpoint(path: "/v1/chat/completions", method: .post, body: body, headers: headers)
     let stream = try await apiClient.performStreamRequest(endpoint)
     
-    var parser = SSEParser()
-    
     for try await data in stream {
       if let line = String(data: data, encoding: .utf8) {
-        parser.parse(line: line) { event in
-          onEvent(event)
-        }
+        processOpenAIAudioStreamLine(line, onEvent: onEvent)
       }
     }
     
     // Send final done event
     onEvent(.done(nil))
+  }
+  
+  /// Process OpenAI streaming line that may contain both text and audio
+  private func processOpenAIAudioStreamLine(_ line: String, onEvent: @escaping (StreamEvent) -> Void) {
+    let trimmed = line.trimmingCharacters(in: .whitespaces)
+    
+    // Skip empty lines
+    if trimmed.isEmpty {
+      return
+    }
+    
+    // Check for SSE data prefix
+    guard line.hasPrefix("data: ") else {
+      return
+    }
+    
+    let content = String(line.dropFirst(6))
+    
+    // Check for [DONE] marker
+    if content == "[DONE]" {
+      return
+    }
+    
+    // Parse OpenAI streaming format
+    guard let data = content.data(using: .utf8),
+          let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+          let choices = json["choices"] as? [[String: Any]],
+          let firstChoice = choices.first,
+          let delta = firstChoice["delta"] as? [String: Any] else {
+      return
+    }
+    
+    // Extract text content
+    if let textContent = delta["content"] as? String, !textContent.isEmpty {
+      onEvent(.text(textContent))
+    }
+    
+    // Extract audio content (OpenAI format: delta.audio.data and delta.audio.transcript)
+    if let audioDict = delta["audio"] as? [String: Any] {
+      // Extract transcript as text
+      if let transcript = audioDict["transcript"] as? String, !transcript.isEmpty {
+        onEvent(.text(transcript))
+      }
+      
+      // Extract audio data (base64 encoded)
+      if let audioBase64 = audioDict["data"] as? String,
+         let audioData = Data(base64Encoded: audioBase64) {
+        onEvent(.audio(audioData))
+      }
+    }
   }
 
   // MARK: - Private Methods

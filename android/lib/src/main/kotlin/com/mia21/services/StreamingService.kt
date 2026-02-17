@@ -283,7 +283,7 @@ class StreamingService(private val apiClient: APIClient) {
         val job = launch {
             try {
                 apiClient.performStreamRequest(endpoint).collect { data ->
-                    processStreamData(data) { event ->
+                    processOpenAIAudioStreamData(data) { event ->
                         trySend(event)
                     }
                 }
@@ -301,7 +301,57 @@ class StreamingService(private val apiClient: APIClient) {
     }
     
     /**
-     * Process OpenAI-style streaming data
+     * Process OpenAI-style streaming data with audio support
+     */
+    private fun processOpenAIAudioStreamData(data: String, onEvent: (StreamEvent) -> Unit) {
+        val trimmed = data.trim()
+        
+        if (trimmed.isEmpty() || trimmed == "[DONE]") {
+            return
+        }
+        
+        try {
+            val json = JSONObject(trimmed)
+            val choices = json.optJSONArray("choices") ?: return
+            if (choices.length() == 0) return
+            
+            val firstChoice = choices.getJSONObject(0)
+            val delta = firstChoice.optJSONObject("delta") ?: return
+            
+            // Extract text content
+            val textContent = delta.optString("content", "")
+            if (textContent.isNotEmpty()) {
+                onEvent(StreamEvent.Text(textContent))
+            }
+            
+            // Extract audio content (OpenAI format: delta.audio.data and delta.audio.transcript)
+            val audioObj = delta.optJSONObject("audio")
+            if (audioObj != null) {
+                // Extract transcript as text
+                val transcript = audioObj.optString("transcript", "")
+                if (transcript.isNotEmpty()) {
+                    onEvent(StreamEvent.Text(transcript))
+                }
+                
+                // Extract audio data (base64 encoded)
+                val audioBase64 = audioObj.optString("data", "")
+                if (audioBase64.isNotEmpty()) {
+                    try {
+                        val audioData = Base64.decode(audioBase64, Base64.DEFAULT)
+                        onEvent(StreamEvent.Audio(audioData))
+                    } catch (e: IllegalArgumentException) {
+                        Logger.error("Failed to decode audio Base64: ${e.message}")
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            // Not a valid OpenAI JSON format, skip
+            Logger.debug("Failed to parse OpenAI audio stream data: ${e.message}")
+        }
+    }
+    
+    /**
+     * Process OpenAI-style streaming data (text only)
      */
     private fun processOpenAIStreamData(data: String, onChunk: (String) -> Unit) {
         val trimmed = data.trim()
