@@ -40,6 +40,13 @@ protocol StreamingServiceProtocol {
     options: CompletionOptions,
     onChunk: @escaping (String) -> Void
   ) async throws
+  
+  func streamCompleteWithVoice(
+    userId: String,
+    messages: [ChatMessage],
+    options: CompletionOptions,
+    onEvent: @escaping (StreamEvent) -> Void
+  ) async throws
 }
 
 // MARK: - Streaming Service Implementation
@@ -222,6 +229,87 @@ final class StreamingService: StreamingServiceProtocol {
         processOpenAIStreamLine(line, onChunk: onChunk)
       }
     }
+  }
+  
+  // MARK: - OpenAI-Compatible Streaming Completions with Voice
+  
+  func streamCompleteWithVoice(
+    userId: String,
+    messages: [ChatMessage],
+    options: CompletionOptions,
+    onEvent: @escaping (StreamEvent) -> Void
+  ) async throws {
+    logInfo("Starting streaming completion with voice (\(messages.count) messages)")
+    
+    // Build OpenAI-compatible messages array (standard OpenAI body format)
+    let messagesArray = messages.map { msg -> [String: String] in
+      return ["role": msg.role.rawValue, "content": msg.content]
+    }
+    
+    var body: [String: Any] = [
+      "model": options.model,
+      "messages": messagesArray,
+      "stream": true
+    ]
+    
+    if let temperature = options.temperature {
+      body["temperature"] = temperature
+    }
+    if let maxTokens = options.maxTokens {
+      body["max_tokens"] = maxTokens
+    }
+    
+    // Build Mia21 extension headers
+    var headers: [String: String] = [:]
+    
+    // User ID for memory isolation
+    headers["X-User-Id"] = userId
+    
+    if let spaceId = options.spaceId {
+      headers["X-Space-Id"] = spaceId
+    }
+    if let agentId = options.agentId {
+      headers["X-Agent-Id"] = agentId
+    }
+    // Force voice enabled for this method
+    headers["X-Voice-Enabled"] = "true"
+    if let voiceId = options.voiceId {
+      headers["X-Voice-Id"] = voiceId
+    }
+    if let incognito = options.incognito {
+      headers["X-Incognito"] = incognito ? "true" : "false"
+    }
+    if let llmApiKey = options.llmApiKey {
+      headers["X-LLM-API-Key"] = llmApiKey
+    }
+    if let timezone = options.timezone {
+      headers["X-Timezone"] = timezone
+    }
+    if let userName = options.userName {
+      headers["X-User-Name"] = userName
+    }
+    if let conversationId = options.conversationId {
+      headers["X-Conversation-Id"] = conversationId
+    }
+    if let meta = options.meta {
+      headers["X-Meta"] = meta
+    }
+    
+    let endpoint = APIEndpoint(path: "/v1/chat/completions", method: .post, body: body, headers: headers)
+    let stream = try await apiClient.performStreamRequest(endpoint)
+    
+    var parser = SSEParser()
+    
+    for try await data in stream {
+      if let line = String(data: data, encoding: .utf8) {
+        parser.parse(line: line) { event in
+          onEvent(event)
+        }
+      }
+    }
+    
+    // Send final done event
+    onEvent(.done(nil))
   }
 
   // MARK: - Private Methods

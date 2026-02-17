@@ -249,4 +249,3 @@ data class GreetingUserContext(
 /** Backward compatibility alias */
 @Deprecated("Use GreetingUserContext instead", ReplaceWith("GreetingUserContext"))
 typealias ChatUserContext = GreetingUserContext
-

@@ -225,6 +225,27 @@ public final class Mia21Client {
     )
   }
   
+  /// Stream a completion with voice using the OpenAI-compatible endpoint.
+  /// No bot/space pre-configuration required - include system message in the messages array.
+  /// Returns both text and audio chunks via StreamEvent.
+  /// - Parameters:
+  ///   - messages: Array of messages including system prompt (role: .system)
+  ///   - options: Completion configuration (model, temperature, voiceId, etc.)
+  ///   - onEvent: Callback invoked for each stream event (text, audio, done, error)
+  /// - Throws: Mia21Error if the request fails
+  public func openAIStreamCompleteWithVoice(
+    messages: [ChatMessage],
+    options: CompletionOptions = CompletionOptions(),
+    onEvent: @escaping (StreamEvent) -> Void
+  ) async throws {
+    try await streamingService.streamCompleteWithVoice(
+      userId: userId,
+      messages: messages,
+      options: options,
+      onEvent: onEvent
+    )
+  }
+  
   /// Initialize a chat using the OpenAI-compatible `/v1/chat/initialize` endpoint.
   /// Generates a personalized greeting based on the user's conversation history and memories.
   /// Perfect for chat initialization screens.

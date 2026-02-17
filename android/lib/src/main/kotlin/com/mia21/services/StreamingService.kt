@@ -224,6 +224,77 @@ class StreamingService(private val apiClient: APIClient) {
     }
     
     /**
+     * Stream completion with voice using the OpenAI-compatible endpoint.
+     * Fully compatible with OpenAI's API - standard OpenAI SDKs work by just changing base_url.
+     * Mia21 extensions are passed via HTTP headers. Voice is always enabled.
+     */
+    fun streamCompleteWithVoice(
+        userId: String,
+        messages: List<ChatMessage>,
+        options: CompletionOptions
+    ): Flow<StreamEvent> = callbackFlow {
+        Logger.debug("Starting streaming completion with voice (${messages.size} messages)")
+        
+        // Build OpenAI-compatible messages array (standard OpenAI body format)
+        val messagesList = messages.map { msg ->
+            mapOf("role" to msg.role.name.lowercase(), "content" to msg.content)
+        }
+        
+        val body = mutableMapOf<String, Any?>(
+            "model" to options.model,
+            "messages" to messagesList,
+            "stream" to true
+        )
+        
+        options.temperature?.let { body["temperature"] = it }
+        options.maxTokens?.let { body["max_tokens"] = it }
+        
+        // Build Mia21 extension headers
+        val headers = mutableMapOf<String, String>()
+        
+        // User ID for memory isolation
+        headers["X-User-Id"] = userId
+        
+        options.spaceId?.let { headers["X-Space-Id"] = it }
+        options.agentId?.let { headers["X-Agent-Id"] = it }
+        // Force voice enabled for this method
+        headers["X-Voice-Enabled"] = "true"
+        options.voiceId?.let { headers["X-Voice-Id"] = it }
+        options.incognito?.let { headers["X-Incognito"] = if (it) "true" else "false" }
+        options.llmApiKey?.let { headers["X-LLM-API-Key"] = it }
+        options.timezone?.let { headers["X-Timezone"] = it }
+        options.userName?.let { headers["X-User-Name"] = it }
+        options.conversationId?.let { headers["X-Conversation-Id"] = it }
+        options.meta?.let { headers["X-Meta"] = it }
+        
+        val endpoint = APIEndpoint(
+            path = "/v1/chat/completions",
+            method = HTTPMethod.POST,
+            body = body,
+            headers = headers
+        )
+        
+        val job = launch {
+            try {
+                apiClient.performStreamRequest(endpoint).collect { data ->
+                    processStreamData(data) { event ->
+                        trySend(event)
+                    }
+                }
+                trySend(StreamEvent.Done(null))
+            } catch (e: Exception) {
+                Logger.error("Streaming completion with voice failed: ${e.message}")
+                trySend(StreamEvent.Error(e))
+                close(e)
+            }
+        }
+        
+        awaitClose {
+            job.cancel()
+        }
+    }
+    
+    /**
      * Process OpenAI-style streaming data
      */
     private fun processOpenAIStreamData(data: String, onChunk: (String) -> Unit) {

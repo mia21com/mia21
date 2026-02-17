@@ -138,4 +138,3 @@ data class SpaceConversation(
     @SerialName("message_count")
     val messageCount: Int
 )
-
